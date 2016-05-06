@@ -34,8 +34,9 @@ public class ElasticDecorator extends RecyclerView.ItemDecoration {
                 mLastScrollValue = dy;
                 offset += dy;
 
-                Log.d("yolo", "scroll: " + recyclerView.computeVerticalScrollOffset() +
-                        ", offset: " + offset);
+//                Log.d("yolo", "scroll: " + recyclerView.computeVerticalScrollOffset() +
+//                        ", offset: " + offset);
+                Log.d("yolo", "dy: " + dy);
             }
 
             @Override

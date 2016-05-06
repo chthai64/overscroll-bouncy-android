@@ -1,13 +1,9 @@
 package com.chauthai.elasticrecyclerview;
 
-import android.graphics.Canvas;
-import android.graphics.Rect;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
-import android.view.View;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +25,7 @@ public class MainActivity extends AppCompatActivity {
         layoutManager.scrollToPosition(10);
 
 
-        MyAdapter adapter = new MyAdapter(this, getDataSet(20));
+        ElasticAdapter adapter = new ElasticAdapter(this, getDataSet(20));
         recyclerView.setAdapter(adapter);
 
         ElasticDecorator decorator = new ElasticDecorator(recyclerView);

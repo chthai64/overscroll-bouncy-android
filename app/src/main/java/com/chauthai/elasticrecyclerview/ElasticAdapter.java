@@ -13,11 +13,11 @@ import java.util.List;
 /**
  * Created by Chau Thai on 5/4/16.
  */
-public class MyAdapter extends RecyclerView.Adapter {
+public class ElasticAdapter extends RecyclerView.Adapter {
     private List<String> mDataSet;
     private LayoutInflater mInflater;
 
-    public MyAdapter(Context context, List<String> dataSet) {
+    public ElasticAdapter(Context context, List<String> dataSet) {
         mDataSet = dataSet;
         mInflater = LayoutInflater.from(context);
     }
