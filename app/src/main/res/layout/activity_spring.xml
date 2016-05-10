@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="10dp"
+    android:orientation="vertical">
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="button 1"
+        android:onClick="btnOneOnClick"
+        android:visibility="gone"/>
+
+    <SeekBar
+        android:id="@+id/seek_tension"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="100"/>
+
+    <SeekBar
+        android:id="@+id/seek_friction"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="100"/>
+
+    <RelativeLayout
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <FrameLayout
+            android:id="@+id/layout_5"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@android:color/holo_blue_light">
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/layout_4"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_below="@id/layout_5"
+            android:background="@android:color/holo_red_dark">
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/layout_3"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_below="@id/layout_4"
+            android:background="@android:color/holo_green_dark">
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/layout_blue"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_below="@id/layout_3"
+            android:background="@android:color/holo_blue_light">
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/layout_1"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_below="@id/layout_blue"
+            android:background="@android:color/background_dark">
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/layout_2"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_below="@id/layout_1"
+            android:background="@android:color/holo_green_dark">
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="20dp"
+            android:layout_alignParentBottom="true">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="tension "/>
+
+            <TextView
+                android:id="@+id/tv_tension"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_alignParentBottom="true">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="friction "/>
+
+            <TextView
+                android:id="@+id/tv_friction"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+    </RelativeLayout>
+</LinearLayout>
