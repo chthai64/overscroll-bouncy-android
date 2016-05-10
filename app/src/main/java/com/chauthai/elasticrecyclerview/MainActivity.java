@@ -22,14 +22,27 @@ public class MainActivity extends AppCompatActivity {
     private void setupRecyclerView() {
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
-        layoutManager.scrollToPosition(10);
 
 
-        ElasticAdapter adapter = new ElasticAdapter(this, getDataSet(20));
+        ElasticAdapter adapter = new ElasticAdapter(recyclerView, this, getDataSet(20));
         recyclerView.setAdapter(adapter);
 
-        ElasticDecorator decorator = new ElasticDecorator(recyclerView);
-        recyclerView.addItemDecoration(decorator);
+//        ElasticDecorator decorator = new ElasticDecorator(recyclerView);
+//        recyclerView.addItemDecoration(decorator);
+//
+//        recyclerView.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
+//            @Override
+//            public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
+//                switch (e.getAction()) {
+//                    case MotionEvent.ACTION_DOWN:
+//                        View child = getClosestChild(rv, e);
+//                        int adapterPosition = rv.getChildAdapterPosition(child);
+//                        break;
+//                }
+//
+//                return false;
+//            }
+//        });
     }
 
     private List<String> getDataSet(int n) {
