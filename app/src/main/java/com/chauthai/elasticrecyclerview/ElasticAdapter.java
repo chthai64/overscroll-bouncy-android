@@ -1,9 +1,12 @@
 package com.chauthai.elasticrecyclerview;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Rect;
+import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -17,6 +20,7 @@ import com.facebook.rebound.SpringSystem;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -25,7 +29,7 @@ import java.util.Map;
 public class ElasticAdapter extends RecyclerView.Adapter {
     private static final int MAX_SPRING_LENGTH = 20;
     private static final double TENSION = 100;
-    private static final double FRICTION = 20;
+    private static final double FRICTION = 15;
 
     private final SpringSystem mSpringSystem = SpringSystem.create();
     private final SpringConfig mSpringConfig = new SpringConfig(TENSION, FRICTION);
@@ -37,12 +41,30 @@ public class ElasticAdapter extends RecyclerView.Adapter {
     private LayoutInflater mInflater;
 
     private int mDragPosition = 0;
+    private Spring spring;
 
-    public ElasticAdapter(RecyclerView recyclerView, Context context, List<String> dataSet) {
+    public ElasticAdapter(final RecyclerView recyclerView, Context context, List<String> dataSet) {
         mRecyclerView = recyclerView;
         mDataSet = dataSet;
         mInflater = LayoutInflater.from(context);
+
+        spring = createSpring();
+        spring.addListener(new SimpleSpringListener() {
+            @Override
+            public void onSpringUpdate(Spring spring) {
+                top = (int) Math.floor(spring.getCurrentValue());
+                recyclerView.invalidateItemDecorations();
+//                Log.d("yolo", "value: " + top);
+            }
+        });
+
         setupRecyclerView();
+        notifyDataSetChanged();
+    }
+
+    @Override
+    public void registerAdapterDataObserver(RecyclerView.AdapterDataObserver observer) {
+        super.registerAdapterDataObserver(observer);
     }
 
     @Override
@@ -80,6 +102,21 @@ public class ElasticAdapter extends RecyclerView.Adapter {
     }
 
     private void setupRecyclerView() {
+        final GestureDetectorCompat gestureDetector = new GestureDetectorCompat(mRecyclerView.getContext(),
+                new GestureDetector.SimpleOnGestureListener() {
+                    @Override
+                    public boolean onDown(MotionEvent e) {
+                        return true;
+                    }
+
+                    @Override
+                    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+                        spring.setCurrentValue(Math.abs(distanceY));
+                        spring.setEndValue(0);
+                        return true;
+                    }
+                });
+
         mRecyclerView.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
             @Override
             public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
@@ -87,9 +124,35 @@ public class ElasticAdapter extends RecyclerView.Adapter {
                     case MotionEvent.ACTION_DOWN:
                         View child = getClosestChild(rv, e);
                         mDragPosition = rv.getChildAdapterPosition(child);
+
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                while (true) {
+                                    try {
+                                        Thread.sleep(10);
+                                    } catch (Exception e) {}
+                                    top = Math.max(0, top - 1);
+
+                                    Activity activity = (Activity) mRecyclerView.getContext();
+                                    activity.runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            mRecyclerView.invalidateItemDecorations();
+                                        }
+                                    });
+                                }
+                            }
+                        }).start();
+
+                        break;
+
+                    case MotionEvent.ACTION_MOVE:
+                        mRecyclerView.invalidateItemDecorations();
                         break;
                 }
 
+//                gestureDetector.onTouchEvent(e);
                 return false;
             }
         });
@@ -143,15 +206,38 @@ public class ElasticAdapter extends RecyclerView.Adapter {
         return null;
     }
 
+    private int top = 100;
+    private Map<Integer, Integer> offsetMap = new HashMap<>();
+
     private final RecyclerView.ItemDecoration mItemDecoration = new RecyclerView.ItemDecoration() {
         @Override
         public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
             int adapterPosition = mRecyclerView.getChildAdapterPosition(view);
-            Spring springBelow = mMapSpring.get(adapterPosition - 1);
+//            Spring springBelow = mMapSpring.get(adapterPosition - 1);
+//
+//            if (springBelow != null) {
+//                outRect.top = (int) springBelow.getCurrentValue();
+//            }
 
-            if (springBelow != null) {
-                outRect.top = (int) springBelow.getCurrentValue();
+            if (!offsetMap.containsKey(adapterPosition)) {
+                offsetMap.put(adapterPosition, 100);
             }
+
+
+            if (adapterPosition == 0) {
+                offsetMap.put(adapterPosition, Math.max(0, offsetMap.get(adapterPosition) - 10));
+            }
+
+            else if (offsetMap.containsKey(adapterPosition - 1) && offsetMap.get(adapterPosition - 1) == 0) {
+                int offset = Math.max(0, offsetMap.get(adapterPosition) - 10);
+//                Log.d("yolo", "pos: " + adapterPosition + ", offset: " + outRect.top);
+
+                offsetMap.put(adapterPosition, offset);
+                outRect.top = offset;
+            }
+
+
+            outRect.top = offsetMap.get(adapterPosition);
         }
     };
 
@@ -175,5 +261,9 @@ public class ElasticAdapter extends RecyclerView.Adapter {
         }
 
         return state + "";
+    }
+
+    private String format(double value) {
+        return String.format(Locale.US, "%1$,.2f", value);
     }
 }

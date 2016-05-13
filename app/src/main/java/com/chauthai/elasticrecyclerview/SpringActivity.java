@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -136,13 +137,14 @@ public class SpringActivity extends AppCompatActivity {
                 float prevY = layoutBlack.getY();
 
                 layoutBlack.setY((float) posBlack);
+
                 onBlackMove(prevY - posBlack);
             }
         });
     }
 
     private void onFourMove(double distance) {
-        double diff = getDiff(layout4, layout5, -distance);
+        double diff = getDiff(layout4, layout5, -distance, false);
         double prevVel = spring5.getVelocity();
 
         spring5.setCurrentValue(diff);
@@ -153,7 +155,7 @@ public class SpringActivity extends AppCompatActivity {
     }
 
     private void onThreeMove(double distance) {
-        double diff = getDiff(layout3, layout4, -distance);
+        double diff = getDiff(layout3, layout4, -distance, false);
         double prevVel = spring4.getVelocity();
 
         spring4.setCurrentValue(diff);
@@ -164,7 +166,7 @@ public class SpringActivity extends AppCompatActivity {
     }
 
     private void onBlueMove(double distance) {
-        double diff = getDiff(layoutBlue, layout3, -distance);
+        double diff = getDiff(layoutBlue, layout3, -distance, false);
         double prevVelocity = spring3.getVelocity();
 
         spring3.setCurrentValue(diff);
@@ -175,7 +177,7 @@ public class SpringActivity extends AppCompatActivity {
     }
 
     private void onBlackMove(double distanceY) {
-        double diff = getDiff(layoutBlack, layoutBlue, -distanceY);
+        double diff = getDiff(layoutBlack, layoutBlue, -distanceY, false);
         double prevVelocity = spring2.getVelocity();
 
         spring2.setCurrentValue(diff);
@@ -185,7 +187,10 @@ public class SpringActivity extends AppCompatActivity {
         spring2.setEndValue(0);
     }
 
-    private double getDiff(View view1, View view2, double distance) {
+    private double getDiff(View view1, View view2, double distance, boolean useDist) {
+        if (useDist)
+            return Math.max(0, distance);
+
         double diff = view1.getY() - view2.getY() - view2.getHeight();
         return Math.min(Math.max(diff * 0.9, 0), MAX_SPRING_LENGTH);
     }
@@ -200,7 +205,7 @@ public class SpringActivity extends AppCompatActivity {
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
                 layoutGreen.setY(layoutGreen.getY() - distanceY);
-                float diff = (float) getDiff(layoutGreen, layoutBlack, -distanceY);
+                float diff = (float) getDiff(layoutGreen, layoutBlack, -distanceY, false);
                 double prevVelocity = spring1.getVelocity();
 
                 spring1.setCurrentValue(diff);
