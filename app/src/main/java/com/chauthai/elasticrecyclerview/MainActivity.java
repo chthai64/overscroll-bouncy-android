@@ -1,15 +1,20 @@
 package com.chauthai.elasticrecyclerview;
 
+import android.graphics.PointF;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.LinearSmoothScroller;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
+import android.view.View;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
+    private RecyclerView.SmoothScroller mSmoothScroller;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -19,30 +24,47 @@ public class MainActivity extends AppCompatActivity {
         setupRecyclerView();
     }
 
+    public void onButtonClick(View v) {
+        mSmoothScroller.setTargetPosition(0);
+        recyclerView.getLayoutManager().startSmoothScroll(mSmoothScroller);
+    }
+
     private void setupRecyclerView() {
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
 
-
         ElasticAdapter adapter = new ElasticAdapter(recyclerView, this, getDataSet(20));
-        recyclerView.setAdapter(adapter);
+        AdapterWrapper adapterWrapper = new AdapterWrapper(this, recyclerView, adapter);
+        recyclerView.setAdapter(adapterWrapper);
 
-//        ElasticDecorator decorator = new ElasticDecorator(recyclerView);
-//        recyclerView.addItemDecoration(decorator);
-//
-//        recyclerView.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
-//            @Override
-//            public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
-//                switch (e.getAction()) {
-//                    case MotionEvent.ACTION_DOWN:
-//                        View child = getClosestChild(rv, e);
-//                        int adapterPosition = rv.getChildAdapterPosition(child);
-//                        break;
-//                }
-//
-//                return false;
-//            }
-//        });
+        mSmoothScroller = new LinearSmoothScroller(this) {
+            @Override
+            public PointF computeScrollVectorForPosition(int targetPosition) {
+                return new PointF(0, -1);
+            }
+        };
+
+        mSmoothScroller = new RecyclerView.SmoothScroller() {
+            @Override
+            protected void onStart() {
+
+            }
+
+            @Override
+            protected void onStop() {
+
+            }
+
+            @Override
+            protected void onSeekTargetStep(int dx, int dy, RecyclerView.State state, Action action) {
+
+            }
+
+            @Override
+            protected void onTargetFound(View targetView, RecyclerView.State state, Action action) {
+
+            }
+        };
     }
 
     private List<String> getDataSet(int n) {
