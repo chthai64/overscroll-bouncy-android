@@ -8,13 +8,15 @@ import android.support.v7.widget.LinearSmoothScroller;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
+import android.widget.SeekBar;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
-    private RecyclerView.SmoothScroller mSmoothScroller;
+    private ConstantSmoothScroller mSmoothScroller;
+    private SeekBar seekBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,10 +24,27 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         setupRecyclerView();
+
+        seekBar = (SeekBar) findViewById(R.id.seekbar);
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                mSmoothScroller.setScrollSpeed(progress);
+                mSmoothScroller.setTargetPosition(0);
+                recyclerView.getLayoutManager().startSmoothScroll(mSmoothScroller);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
     }
 
     public void onButtonClick(View v) {
-        mSmoothScroller.setTargetPosition(0);
+        mSmoothScroller.setTargetPosition(19);
+        mSmoothScroller.forceVerticalSnap(ConstantSmoothScroller.SNAP_TO_END);
         recyclerView.getLayoutManager().startSmoothScroll(mSmoothScroller);
     }
 
@@ -37,32 +56,10 @@ public class MainActivity extends AppCompatActivity {
         AdapterWrapper adapterWrapper = new AdapterWrapper(this, recyclerView, adapter);
         recyclerView.setAdapter(adapterWrapper);
 
-        mSmoothScroller = new LinearSmoothScroller(this) {
+        mSmoothScroller = new ConstantSmoothScroller(this) {
             @Override
             public PointF computeScrollVectorForPosition(int targetPosition) {
-                return new PointF(0, -1);
-            }
-        };
-
-        mSmoothScroller = new RecyclerView.SmoothScroller() {
-            @Override
-            protected void onStart() {
-
-            }
-
-            @Override
-            protected void onStop() {
-
-            }
-
-            @Override
-            protected void onSeekTargetStep(int dx, int dy, RecyclerView.State state, Action action) {
-
-            }
-
-            @Override
-            protected void onTargetFound(View targetView, RecyclerView.State state, Action action) {
-
+                return new PointF(0, -1); // -1 scroll down
             }
         };
     }

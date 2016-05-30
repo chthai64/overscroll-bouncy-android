@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.os.SystemClock;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.LinearSmoothScroller;
@@ -28,7 +29,7 @@ import java.util.Locale;
 @SuppressWarnings("FieldCanBeLocal")
 public class AdapterWrapper extends RecyclerView.Adapter {
     private static final double TENSION = 100;
-    private static final double FRICTION = 50;
+    private static final double FRICTION = 40;
 
     private static final int VIEW_TYPE_FOOTER = 1;
     private static final int FOOTER_SIZE = 300; // dp
@@ -41,10 +42,9 @@ public class AdapterWrapper extends RecyclerView.Adapter {
     private RecyclerView.Adapter mAdapter;
     private LinearLayoutManager mLayoutManager;
 
-    private RecyclerView.SmoothScroller mSmoothScroller;  // -1 up, 1 down.
-
     private View footerView;
     private Spring mSpringFooter;
+    private ConstantSmoothScroller mScrollerFooter;
 
     public AdapterWrapper(Context context, RecyclerView recyclerView, RecyclerView.Adapter adapter) {
         mContext = context;
@@ -54,13 +54,7 @@ public class AdapterWrapper extends RecyclerView.Adapter {
         mRecyclerView.addItemDecoration(mItemDecoration);
         mLayoutManager = (LinearLayoutManager) mRecyclerView.getLayoutManager();
 
-        mSmoothScroller = new LinearSmoothScroller(context) {
-            @Override
-            public PointF computeScrollVectorForPosition(int targetPosition) {
-                Log.d("yolo", "targetPos: " + targetPosition);
-                return new PointF(0, 0.1f);
-            }
-        };
+        mScrollerFooter = new ConstantSmoothScroller(context);
 
         initFooterSpring();
         setupRecyclerView();
@@ -97,14 +91,64 @@ public class AdapterWrapper extends RecyclerView.Adapter {
         mAdapter.onAttachedToRecyclerView(recyclerView);
     }
 
-    boolean done = false;
+    private long prevTime = SystemClock.elapsedRealtime();
+    private boolean isScrollBack = false;
+
     private void setupRecyclerView() {
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                int footerVisibleLength = getFooterVisibleLength();
+                if (mAdapter.getItemCount() > 0) {
+                    int footerVisibleLength = getFooterVisibleLength();
 
+//                    Log.d("yolo", "dy: " + dy);
+                    if (footerVisibleLength > 0) {
+                        if (dy == 0 || dy == 1) {
+                            if (!isScrollBack) {
+                                mSpringFooter.setCurrentValue(footerVisibleLength);
+                                mSpringFooter.setEndValue(0);
+                                isScrollBack = true;
+                            }
+                        }
+                        else if (dy > 1) {
+                            long delta = SystemClock.elapsedRealtime() - prevTime;
+                            float speed = (float) dy / delta;
+                            float visibleRatio = (float) footerVisibleLength / dpToPx(FOOTER_SIZE) * 2;
+                            speed = Math.max(0, speed - speed * visibleRatio);
 
+                            mScrollerFooter.setScrollSpeed(speed);
+                            mScrollerFooter.setTargetPosition(getItemCount() - 1);
+                            mScrollerFooter.setScrollVector(new PointF(0, 1));
+
+                            mLayoutManager.startSmoothScroll(mScrollerFooter);
+
+                            isScrollBack = false;
+                            mSpringFooter.setAtRest();
+                        }
+                    } else {
+                        mSpringFooter.setAtRest();
+                    }
+
+                    prevTime = SystemClock.elapsedRealtime();
+                }
+            }
+
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                Log.d("yolo", "newState: " + toStringScrollState(newState));
+
+                switch (newState) {
+                    case RecyclerView.SCROLL_STATE_IDLE:
+                        int footerVisible = getFooterVisibleLength();
+
+                        if (footerVisible > 0 && !isScrollBack) {
+                            mSpringFooter.setCurrentValue(footerVisible);
+                            mSpringFooter.setEndValue(0);
+                            isScrollBack = true;
+                        }
+
+                        break;
+                }
             }
         });
 
@@ -139,7 +183,6 @@ public class AdapterWrapper extends RecyclerView.Adapter {
             return view.getTop();
         }
 
-
         return 0;
     }
 
@@ -160,11 +203,14 @@ public class AdapterWrapper extends RecyclerView.Adapter {
         mSpringFooter.addListener(new SimpleSpringListener() {
             @Override
             public void onSpringUpdate(Spring spring) {
-                double currValue = spring.getCurrentDisplacementDistance();
-                int scrollBy = (int) -currValue;
-//                mRecyclerView.scrollBy(0, scrollBy);
+                float currSpeed = Math.abs((float) mSpringFooter.getVelocity() / 1000.0f);
 
-//                Log.d("yolo", "currValue: " + currValue);
+                mScrollerFooter.setTargetPosition(mAdapter.getItemCount() - 1);
+                mScrollerFooter.setScrollVector(new PointF(0, -1));
+                mScrollerFooter.forceVerticalSnap(ConstantSmoothScroller.SNAP_TO_END);
+                mScrollerFooter.setScrollSpeed(currSpeed);
+
+                mLayoutManager.startSmoothScroll(mScrollerFooter);
             }
         });
     }
@@ -215,6 +261,18 @@ public class AdapterWrapper extends RecyclerView.Adapter {
 
     private String format(double value) {
         return String.format(Locale.US, "%1$,.2f", value);
+    }
+
+    private String toStringScrollState(int state) {
+        switch (state) {
+            case RecyclerView.SCROLL_STATE_DRAGGING:
+                return "dragging";
+            case RecyclerView.SCROLL_STATE_IDLE:
+                return "idle";
+            case RecyclerView.SCROLL_STATE_SETTLING:
+                return "settling";
+        }
+        return "";
     }
 }
 

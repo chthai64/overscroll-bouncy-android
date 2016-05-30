@@ -7,11 +7,27 @@
     tools:context="com.chauthai.elasticrecyclerview.MainActivity"
     android:orientation="vertical">
 
-    <Button
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="fling"
-        android:onClick="onButtonClick"/>
+        android:orientation="horizontal">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="fling"
+            android:onClick="onButtonClick"/>
+
+        <SeekBar
+            android:id="@+id/seekbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:progress="10"/>
+
+    </LinearLayout>
+
+
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recyclerView"
