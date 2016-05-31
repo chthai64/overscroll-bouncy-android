@@ -42,7 +42,9 @@ public class ConstantSmoothScroller extends LinearSmoothScroller {
 
     @Override
     protected int calculateTimeForScrolling(int dx) {
-        return (int) Math.ceil(Math.abs(dx) / mScrollSpeed);
+        int time = (int) Math.ceil(Math.abs(dx) / mScrollSpeed);
+//        Log.d("yolo", "calculate time dx: " + dx + ", speed: " + mScrollSpeed + ", time: " + time);
+        return time;
     }
 
     @Override

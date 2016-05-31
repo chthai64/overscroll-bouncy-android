@@ -10,6 +10,11 @@ import android.util.Log;
 import android.view.View;
 import android.widget.SeekBar;
 
+import com.facebook.rebound.SimpleSpringListener;
+import com.facebook.rebound.Spring;
+import com.facebook.rebound.SpringConfig;
+import com.facebook.rebound.SpringSystem;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +22,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private ConstantSmoothScroller mSmoothScroller;
     private SeekBar seekBar;
+    Spring spring;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,12 +46,29 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {}
         });
+
+        spring = mSpringSystem.createSpring();
+        spring.setSpringConfig(mSpringConfig);
+        spring.addListener(new SimpleSpringListener() {
+            @Override
+            public void onSpringUpdate(Spring spring) {
+                Log.d("yolo", "spring length: " + spring.getCurrentDisplacementDistance());
+            }
+        });
     }
 
+    private static final double TENSION = 100;
+    private static final double FRICTION = 50;
+    private final SpringSystem mSpringSystem = SpringSystem.create();
+    private final SpringConfig mSpringConfig = new SpringConfig(TENSION, FRICTION);
+
     public void onButtonClick(View v) {
-        mSmoothScroller.setTargetPosition(19);
-        mSmoothScroller.forceVerticalSnap(ConstantSmoothScroller.SNAP_TO_END);
+        mSmoothScroller.setTargetPosition(0);
+//        mSmoothScroller.forceVerticalSnap(ConstantSmoothScroller.SNAP_TO_END);
         recyclerView.getLayoutManager().startSmoothScroll(mSmoothScroller);
+
+//        spring.setCurrentValue(500);
+//        spring.setEndValue(0);
     }
 
     private void setupRecyclerView() {
