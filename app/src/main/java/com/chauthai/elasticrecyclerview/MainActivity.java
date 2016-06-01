@@ -63,12 +63,11 @@ public class MainActivity extends AppCompatActivity {
     private final SpringConfig mSpringConfig = new SpringConfig(TENSION, FRICTION);
 
     public void onButtonClick(View v) {
-        mSmoothScroller.setTargetPosition(0);
-//        mSmoothScroller.forceVerticalSnap(ConstantSmoothScroller.SNAP_TO_END);
-        recyclerView.getLayoutManager().startSmoothScroll(mSmoothScroller);
+//        mSmoothScroller.setTargetPosition(0);
+////        mSmoothScroller.forceVerticalSnap(ConstantSmoothScroller.SNAP_TO_END);
+//        recyclerView.getLayoutManager().startSmoothScroll(mSmoothScroller);
 
-//        spring.setCurrentValue(500);
-//        spring.setEndValue(0);
+        LinearLayoutManager layoutManager = ((LinearLayoutManager) recyclerView.getLayoutManager());
     }
 
     private void setupRecyclerView() {
@@ -78,6 +77,7 @@ public class MainActivity extends AppCompatActivity {
         ElasticAdapter adapter = new ElasticAdapter(recyclerView, this, getDataSet(20));
         AdapterWrapper adapterWrapper = new AdapterWrapper(this, recyclerView, adapter);
         recyclerView.setAdapter(adapterWrapper);
+
 
         mSmoothScroller = new ConstantSmoothScroller(this) {
             @Override
