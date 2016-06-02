@@ -34,7 +34,7 @@ public class AdapterWrapper extends RecyclerView.Adapter {
     private static final double FRICTION = 20;
 
     private static final int VIEW_TYPE_FOOTER = 1;
-    private static final int FOOTER_SIZE = 100; // dp
+    private static final int FOOTER_SIZE = 300; // dp
 
     private final SpringSystem mSpringSystem = SpringSystem.create();
     private final SpringConfig mSpringConfig = new SpringConfig(TENSION, FRICTION);
@@ -98,6 +98,7 @@ public class AdapterWrapper extends RecyclerView.Adapter {
     private boolean footerAlreadyVisible = false;
     private int prevSpeed = 0;
     private int minDistanceToScrollBack = 0;
+    private boolean shouldUseSpring = false;
 
     private void setupRecyclerView() {
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -133,7 +134,7 @@ public class AdapterWrapper extends RecyclerView.Adapter {
 
                 if (!footerAlreadyVisible) {
                     // check if it's already exceeded the distance to scroll back
-                    minDistanceToScrollBack = (int) Math.min((dpToPx(FOOTER_SIZE) / 10.0 * speed), dpToPx(FOOTER_SIZE));
+                    minDistanceToScrollBack = (int) Math.min((dpToPx(FOOTER_SIZE) / 20.0 * speed), dpToPx(FOOTER_SIZE));
                     footerAlreadyVisible = true;
 
                     Log.d("yolo", "speed: " + format(speed) + ", totalSize: " + dpToPx(FOOTER_SIZE)
@@ -141,11 +142,13 @@ public class AdapterWrapper extends RecyclerView.Adapter {
 
                     // scroll back
                     if (footerVisible >= minDistanceToScrollBack) {
+                        Log.d("yolo", "setLength 1: " + footerVisible);
                         isScrollBack = true;
                         mSpringFooter.setCurrentValue(footerVisible);
                         mSpringFooter.setEndValue(0);
                     }
                 } else if (footerVisible >= minDistanceToScrollBack) {
+                    Log.d("yolo", "setLength 2: " + footerVisible);
                     // scroll back
                     isScrollBack = true;
                     mSpringFooter.setCurrentValue(footerVisible);
@@ -179,6 +182,7 @@ public class AdapterWrapper extends RecyclerView.Adapter {
             public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
                 switch (e.getAction()) {
                     case MotionEvent.ACTION_DOWN:
+                        shouldUseSpring = false;
                         mSpringFooter.setAtRest();
                         isScrollBack = false;
                         rv.stopScroll();
@@ -192,10 +196,12 @@ public class AdapterWrapper extends RecyclerView.Adapter {
                     case MotionEvent.ACTION_UP:
                         int footerVisible = getFooterVisibleLength();
                         if (footerVisible > 0) {
+                            Log.d("yolo", "setLength onIntercept");
                             isScrollBack = true;
                             mSpringFooter.setCurrentValue(footerVisible);
                             mSpringFooter.setEndValue(0);
                         }
+                        shouldUseSpring = true;
                         break;
                 }
 
@@ -236,21 +242,15 @@ public class AdapterWrapper extends RecyclerView.Adapter {
         mSpringFooter.addListener(new SimpleSpringListener() {
             @Override
             public void onSpringUpdate(Spring spring) {
-//                float currSpeed = Math.abs((float) mSpringFooter.getVelocity() / 1000.0f);
-//
-//                mScrollerFooter.setTargetPosition(mAdapter.getItemCount() - 1);
-//                mScrollerFooter.setScrollVector(new PointF(0, -1));
-//                mScrollerFooter.forceVerticalSnap(ConstantSmoothScroller.SNAP_TO_END);
-//                mScrollerFooter.setScrollSpeed(currSpeed);
-//
-//                mLayoutManager.startSmoothScroll(mScrollerFooter);
+                if (!shouldUseSpring)
+                    return;
 
                 int visibleLength = getFooterVisibleLength();
                 double springLength = spring.getCurrentDisplacementDistance();
                 double diff = (springLength - visibleLength);
 
-                Log.d("yolo", "spring length: " + springLength +
-                        ", visible length: " + visibleLength + ", diff: " + diff);
+//                Log.d("yolo", "spring length: " + springLength +
+//                        ", visible length: " + visibleLength + ", diff: " + diff);
 
                 if (diff < 0) {
                     mRecyclerView.stopScroll();
@@ -260,7 +260,7 @@ public class AdapterWrapper extends RecyclerView.Adapter {
 
             @Override
             public void onSpringAtRest(Spring spring) {
-                Log.d("yolo", "onSpringRest");
+//                Log.d("yolo", "onSpringRest");
                 isScrollBack = false;
             }
         });
@@ -288,6 +288,10 @@ public class AdapterWrapper extends RecyclerView.Adapter {
 
                 @Override
                 public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+                    int footerVisible = getFooterVisibleLength();
+
+                    // stop scroll, do it manually
+
                     return true;
                 }
             });
