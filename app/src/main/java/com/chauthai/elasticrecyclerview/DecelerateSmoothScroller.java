@@ -6,15 +6,15 @@ import android.support.v7.widget.LinearSmoothScroller;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
-import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 
 /**
- * Created by Chau Thai on 5/30/2016.
+ * Created by Chau Thai on 6/3/16.
  */
-public class ConstantSmoothScroller extends LinearSmoothScroller {
+public class DecelerateSmoothScroller extends LinearSmoothScroller {
     private static final String TAG = "yolo";
-    private float mScrollSpeed = 1; // px per ms
+    private float mInitialSpeed = 1; // px per ms
+    private int mDistanceToStop = 100;
 
     private boolean mShouldForceHorzSnap = false;
     private boolean mShouldForceVertSnap = false;
@@ -23,14 +23,27 @@ public class ConstantSmoothScroller extends LinearSmoothScroller {
 
     private PointF mScrollVector = new PointF();
 
-    public ConstantSmoothScroller(Context context) {
+    public DecelerateSmoothScroller(Context context) {
         super(context);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+//        Log.d(TAG, "onStart");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+//        Log.d(TAG, "onStop");
     }
 
     @Override
     protected void onTargetFound(View targetView, RecyclerView.State state, Action action) {
         final int dx = calculateDxToMakeVisible(targetView, getHorizontalSnap());
-        final int dy = calculateDyToMakeVisible(targetView, getVerticalSnap());
+//        final int dy = calculateDyToMakeVisible(targetView, getVerticalSnap());
+        final int dy = -mDistanceToStop;
         final int distance = (int) Math.sqrt(dx * dx + dy * dy);
         final int time = calculateTimeForDeceleration(distance);
 
@@ -38,39 +51,21 @@ public class ConstantSmoothScroller extends LinearSmoothScroller {
         Log.d(TAG, "onTargetFound, distance: " + distance + ", time: " + time);
 
         if (time > 0) {
-            action.update(-dx, -dy, time, new DecelerateInterpolator());
+            action.update(-dx, -dy, time, new DecelerateInterpolator(1.0f));
         }
     }
 
     @Override
-    protected void onSeekTargetStep(int dx, int dy, RecyclerView.State state, Action action) {
-//        Log.d("yolo", "onSeekTargetStep");
-        super.onSeekTargetStep(dx, dy, state, action);
-    }
-
-    @Override
     protected int calculateTimeForScrolling(int dx) {
-        int time = (int) Math.ceil(Math.abs(dx) / mScrollSpeed);
+        int time = (int) Math.ceil(Math.abs(dx) / mInitialSpeed);
 //        Log.d("yolo", "calculate time dx: " + dx + ", speed: " + mScrollSpeed + ", time: " + time);
         return time;
     }
 
 //    @Override
 //    protected int calculateTimeForDeceleration(int dx) {
-//        return calculateTimeForScrolling(dx);
+//        return  (int) Math.ceil(calculateTimeForScrolling(dx) / 0.3356);
 //    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        Log.d(TAG, "onStart");
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        Log.d(TAG, "onStop");
-    }
 
     @Override
     public PointF computeScrollVectorForPosition(int targetPosition) {
@@ -78,10 +73,15 @@ public class ConstantSmoothScroller extends LinearSmoothScroller {
     }
 
     /**
+     * Set the initial speed to scroll.
      * @param speed pixels per ms
      */
-    public void setScrollSpeed(float speed) {
-        mScrollSpeed = speed;
+    public void setInitialSpeed(float speed) {
+        mInitialSpeed = speed;
+    }
+
+    public void setDistanceToStop(int distance) {
+        mDistanceToStop = distance;
     }
 
     public void forceHorizontalSnap(int horizontalSnap) {
