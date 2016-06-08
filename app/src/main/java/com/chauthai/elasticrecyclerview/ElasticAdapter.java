@@ -40,7 +40,7 @@ public class ElasticAdapter extends RecyclerView.Adapter {
     private final RecyclerView mRecyclerView;
     private final Context mContext;
 
-    private final Map<Integer, Spring> mMapSpring = new HashMap<>(); // adapter position -> spring
+    private final Map<Integer, Spring> mMapSpring = new HashMap<>(); // adapter position -> spring1
 
     private List<String> mDataSet;
     private LayoutInflater mInflater;
@@ -59,7 +59,7 @@ public class ElasticAdapter extends RecyclerView.Adapter {
             @Override
             public void onSpringUpdate(Spring spring) {
                 // do something here
-//                offset = (float) spring.getCurrentValue();
+//                offset = (float) spring1.getCurrentValue();
 //                Log.d("yolo", "offset: " + format(offset));
 //                mRecyclerView.invalidateItemDecorations();
             }
@@ -81,17 +81,17 @@ public class ElasticAdapter extends RecyclerView.Adapter {
             Holder holder = (Holder) viewHolder;
             holder.textView.setText(mDataSet.get(position));
 
-            // setup spring
+            // setup spring1
 //            if (!mMapSpring.containsKey(position)) {
-//                Spring spring = createSpring();
-//                spring.addListener(new SimpleSpringListener() {
+//                Spring spring1 = createSpring();
+//                spring1.addListener(new SimpleSpringListener() {
 //                    @Override
-//                    public void onSpringUpdate(Spring spring) {
+//                    public void onSpringUpdate(Spring spring1) {
 //                        mRecyclerView.invalidateItemDecorations();
 //                    }
 //                });
 //
-//                mMapSpring.put(position, spring);
+//                mMapSpring.put(position, spring1);
 //            }
         }
     }
@@ -120,12 +120,12 @@ public class ElasticAdapter extends RecyclerView.Adapter {
                     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
                         scrolling = true;
 //                        double currValue = Math.max(0, offset + distanceY);
-//                        double prevVel = spring.getVelocity();
+//                        double prevVel = spring1.getVelocity();
 //
-//                        spring.setCurrentValue(currValue);
+//                        spring1.setCurrentValue(currValue);
 //                        if (currValue > 0)
-//                            spring.setVelocity(prevVel);
-//                        spring.setEndValue(0);
+//                            spring1.setVelocity(prevVel);
+//                        spring1.setEndValue(0);
 
 //                        offset = (float) currValue;
 //                        mRecyclerView.invalidateItemDecorations();
@@ -164,12 +164,12 @@ public class ElasticAdapter extends RecyclerView.Adapter {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 if (scrolling) {
-//                    double currValue = Math.max(0, spring.getCurrentValue() + dy);
-//                    double prevVel = spring.getVelocity();
+//                    double currValue = Math.max(0, spring1.getCurrentValue() + dy);
+//                    double prevVel = spring1.getVelocity();
 //
-//                    spring.setCurrentValue(currValue);
-//                    spring.setVelocity(prevVel);
-//                    spring.setEndValue(0);
+//                    spring1.setCurrentValue(currValue);
+//                    spring1.setVelocity(prevVel);
+//                    spring1.setEndValue(0);
 
 //                    View lastView = layoutManager.findViewByPosition(mDataSet.size() - 1);
 //                    if (lastView != null) {

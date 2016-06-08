@@ -29,13 +29,15 @@ import java.util.Locale;
  */
 @SuppressWarnings("FieldCanBeLocal")
 public class AdapterWrapper extends RecyclerView.Adapter {
-    private static final int SPEED_FACTOR = 5;
+    private static final double SPEED_FACTOR = 10;
 
-    private static final double TENSION = 100;
-    private static final double FRICTION = 20;
+    private static final double TENSION = 1000;
+    private static final double FRICTION = 200;
 
     private static final int VIEW_TYPE_FOOTER = 1;
     private static final int FOOTER_SIZE = 300; // dp
+
+    private final int footerSizePx;
 
     private final SpringSystem mSpringSystem = SpringSystem.create();
     private final SpringConfig mSpringConfig = new SpringConfig(TENSION, FRICTION);
@@ -53,6 +55,8 @@ public class AdapterWrapper extends RecyclerView.Adapter {
         mContext = context;
         mAdapter = adapter;
         mRecyclerView = recyclerView;
+        footerSizePx = (int) dpToPx(FOOTER_SIZE);
+
         footerView = createFooterView();
         mRecyclerView.addItemDecoration(mItemDecoration);
 
@@ -98,7 +102,6 @@ public class AdapterWrapper extends RecyclerView.Adapter {
     private long prevTime = SystemClock.elapsedRealtime();
     private boolean isScrollBack = false;
     private boolean footerAlreadyVisible = false;
-    private int prevSpeed = 0;
     private int minDistanceToScrollBack = 0;
     private boolean shouldUseSpring = false;
 
@@ -108,7 +111,13 @@ public class AdapterWrapper extends RecyclerView.Adapter {
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                if (recyclerView.getScrollState() == RecyclerView.SCROLL_STATE_DRAGGING)
+                int state = recyclerView.getScrollState();
+
+                if (state == RecyclerView.SCROLL_STATE_DRAGGING)
+                    return;
+
+                // is scrolling using scrollBY() method.
+                if (state == RecyclerView.SCROLL_STATE_IDLE && dy != 0)
                     return;
 
                 long currTime = SystemClock.elapsedRealtime(); // TODO: handle when delta time is 0
@@ -119,11 +128,11 @@ public class AdapterWrapper extends RecyclerView.Adapter {
                 if (footerVisible == 0) {
                     footerAlreadyVisible = false;
                     isScrollBack = false;
+
                     if (!mSpringFooter.isAtRest()) {
                         Log.d("yolo", "rest");
                         mSpringFooter.setAtRest();
                     }
-                    prevSpeed = 0;
                     minDistanceToScrollBack = 0;
                     prevTime = currTime;
                     return;
@@ -134,33 +143,29 @@ public class AdapterWrapper extends RecyclerView.Adapter {
                     return;
                 }
 
-//                Log.d("yolo", "prevSpeed: " + prevSpeed + ", currSpeed: " + speed);
-
+//                Log.d("yolo", "onScroll, alreadyVisible: " + footerAlreadyVisible +
+//                        ", footerVisible: " + footerVisible + ", minDistToScrollBack: " + minDistanceToScrollBack);
 
                 if (!footerAlreadyVisible) {
                     // check if it's already exceeded the distance to scroll back
-                    minDistanceToScrollBack = (int) Math.min((dpToPx(FOOTER_SIZE) / 15.0 * speed), dpToPx(FOOTER_SIZE));
+                    minDistanceToScrollBack = getMinDistanceToScrollBack(speed);
                     footerAlreadyVisible = true;
 
-//                    Log.d("yolo", "speed: " + format(speed) + ", totalSize: " + dpToPx(FOOTER_SIZE)
-//                          + ", minDist: " + minDistanceToScrollBack + ", currVisible: " + footerVisible);
+                    Log.d("yolo", "speed: " + format(speed) + ", totalSize: " + FOOTER_SIZE
+                          + ", minDist: " + format(pxToDp(minDistanceToScrollBack))
+                            + ", currVisible: " + format(pxToDp(footerVisible)));
 
                     // scroll back
                     if (footerVisible >= minDistanceToScrollBack) {
                         Log.d("yolo", "setLength 1: " + footerVisible);
-                        isScrollBack = true;
-                        mSpringFooter.setCurrentValue(footerVisible);
-                        mSpringFooter.setEndValue(0);
+                        scrollBack(footerVisible);
                     } else {
-                        reduceScrollSpeed(speed);
+                        reduceScrollSpeed(footerVisible, speed);
                     }
                 } else if (footerVisible >= minDistanceToScrollBack) {
                     Log.d("yolo", "setLength 2: " + footerVisible);
                     // scroll back
-                    isScrollBack = true;
-                    mSpringFooter.setCurrentValue(footerVisible);
-                    mSpringFooter.setVelocity(Math.abs(speed));
-                    mSpringFooter.setEndValue(0);
+                    scrollBack(footerVisible);
                 }
 
                 prevTime = currTime;
@@ -191,7 +196,11 @@ public class AdapterWrapper extends RecyclerView.Adapter {
                 switch (e.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         shouldUseSpring = false;
-                        mSpringFooter.setAtRest();
+
+                        if (!mSpringFooter.isAtRest()) {
+                            Log.d("yolo", "rest");
+                            mSpringFooter.setAtRest();
+                        }
                         isScrollBack = false;
                         rv.stopScroll();
 
@@ -205,9 +214,7 @@ public class AdapterWrapper extends RecyclerView.Adapter {
                         int footerVisible = getFooterVisibleLength();
                         if (footerVisible > 0) {
                             Log.d("yolo", "setLength onIntercept");
-                            isScrollBack = true;
-                            mSpringFooter.setCurrentValue(footerVisible);
-                            mSpringFooter.setEndValue(0);
+                            scrollBack(footerVisible);
                         }
 
                         shouldUseSpring = true;
@@ -230,12 +237,39 @@ public class AdapterWrapper extends RecyclerView.Adapter {
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
                         lockScroll = false;
+
+                        int footerVisible = getFooterVisibleLength();
+                        if (footerVisible > 0) {
+                            Log.d("yolo", "setLength onIntercept");
+                            scrollBack(footerVisible);
+                        }
+
+                        shouldUseSpring = true;
+                        break;
                 }
             }
         });
     }
 
-    private void reduceScrollSpeed(double speed) {
+    private final Object lockSpring = new Object();
+
+    private void scrollBack(int footerVisible) {
+        synchronized (lockSpring) {
+            isScrollBack = true;
+            isFirstValue = true;
+
+            mRecyclerView.stopScroll();
+            mSpringFooter.setCurrentValue(footerVisible);
+            mSpringFooter.setEndValue(0);
+        }
+    }
+
+    private int getMinDistanceToScrollBack(double speed) {
+        return (int) Math.min((footerSizePx / SPEED_FACTOR * pxToDp(speed)), footerSizePx);
+
+    }
+
+    private void reduceScrollSpeed(int currentVisible, double speed) {
         int distToStop = minDistanceToScrollBack;
 
         mScrollerFooter.setTargetPosition(getItemCount() - 1);
@@ -267,6 +301,7 @@ public class AdapterWrapper extends RecyclerView.Adapter {
         return 0;
     }
 
+    private boolean isFirstValue = true;
     private void initFooterSpring() {
         mSpringFooter = mSpringSystem.createSpring();
         mSpringFooter.setSpringConfig(mSpringConfig);
@@ -277,16 +312,25 @@ public class AdapterWrapper extends RecyclerView.Adapter {
                 if (!shouldUseSpring)
                     return;
 
-                int visibleLength = getFooterVisibleLength();
-                double springLength = spring.getCurrentDisplacementDistance();
-                double diff = (springLength - visibleLength);
+                synchronized (lockSpring) {
+                    int visibleLength = getFooterVisibleLength();
+                    double springLength = spring.getCurrentDisplacementDistance();
+                    double diff = (springLength - visibleLength);
 
-//                Log.d("yolo", "spring length: " + springLength +
-//                        ", visible length: " + visibleLength + ", diff: " + diff);
+//                    Log.d("yolo", "spring length: " + format(springLength) +
+//                            ", visible length: " + visibleLength + ", diff: " + format(diff));
 
-                if (diff < 0) {
-                    mRecyclerView.stopScroll();
-                    mRecyclerView.scrollBy(0, (int) diff);
+                    if (diff < 0) {
+                        // discard the first value
+                        if (isFirstValue) {
+                            isFirstValue = false;
+                            return;
+                        }
+
+                        mRecyclerView.stopScroll();
+                        mRecyclerView.scrollBy(0, (int) diff);
+                    }
+
                 }
             }
 
@@ -301,7 +345,7 @@ public class AdapterWrapper extends RecyclerView.Adapter {
     private View createFooterView() {
         View view = new View(mContext);
         view.setLayoutParams(new RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT,
-                dpToPx(FOOTER_SIZE)));
+                 footerSizePx));
         return view;
     }
 
@@ -327,7 +371,7 @@ public class AdapterWrapper extends RecyclerView.Adapter {
 
 //                    Log.d("yolo", "lockscroll: " + lockScroll);
                     if (lockScroll) {
-                        double ratioVisible = (double) footerVisible / dpToPx(FOOTER_SIZE);
+                        double ratioVisible = (double) footerVisible / footerSizePx;
                         double scrollDist =  Math.max(0, distanceY - distanceY * ratioVisible);
 
                         mRecyclerView.scrollBy(0, (int) scrollDist);
@@ -345,16 +389,16 @@ public class AdapterWrapper extends RecyclerView.Adapter {
         }
     };
 
-    private int dpToPx(int dp) {
+    private double dpToPx(double dp) {
         Resources resources = mContext.getResources();
         DisplayMetrics metrics = resources.getDisplayMetrics();
-        return (int) (dp * ((float)metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT));
+        return  dp * ((double) metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT);
     }
 
-    private int pxToDp(int px) {
+    private double pxToDp(double px) {
         Resources resources = mContext.getResources();
         DisplayMetrics metrics = resources.getDisplayMetrics();
-        return (int) (px / ((float)metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT));
+        return  px / ((double) metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT);
     }
 
     private String format(double value) {

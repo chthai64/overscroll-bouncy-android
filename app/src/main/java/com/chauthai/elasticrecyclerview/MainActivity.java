@@ -1,10 +1,10 @@
 package com.chauthai.elasticrecyclerview;
 
 import android.graphics.PointF;
+import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.LinearSmoothScroller;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
@@ -22,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private ConstantSmoothScroller mSmoothScroller;
     private SeekBar seekBar;
-    Spring spring;
+    Spring spring1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,15 +47,23 @@ public class MainActivity extends AppCompatActivity {
             public void onStopTrackingTouch(SeekBar seekBar) {}
         });
 
-        spring = mSpringSystem.createSpring();
-        spring.setSpringConfig(mSpringConfig);
-        spring.addListener(new SimpleSpringListener() {
+        spring1 = mSpringSystem.createSpring();
+        spring1.setSpringConfig(mSpringConfig);
+        spring1.addListener(new SimpleSpringListener() {
             @Override
             public void onSpringUpdate(Spring spring) {
-                Log.d("yolo", "spring length: " + spring.getCurrentDisplacementDistance());
+                long currTime = SystemClock.elapsedRealtime();
+                long delta = currTime - prevTime;
+                prevTime = currTime;
+
+                Log.d("yolo", "delta: " + delta + " ms");
             }
         });
+
     }
+
+
+    private long prevTime = 0;
 
     private static final double TENSION = 100;
     private static final double FRICTION = 50;
@@ -63,9 +71,13 @@ public class MainActivity extends AppCompatActivity {
     private final SpringConfig mSpringConfig = new SpringConfig(TENSION, FRICTION);
 
     public void onButtonClick(View v) {
-        mSmoothScroller.setTargetPosition(0);
-//        mSmoothScroller.forceVerticalSnap(ConstantSmoothScroller.SNAP_TO_END);
-        recyclerView.getLayoutManager().startSmoothScroll(mSmoothScroller);
+//        mSmoothScroller.setTargetPosition(0);
+////        mSmoothScroller.forceVerticalSnap(ConstantSmoothScroller.SNAP_TO_END);
+//        recyclerView.getLayoutManager().startSmoothScroll(mSmoothScroller);
+
+        prevTime = SystemClock.elapsedRealtime();
+        spring1.setCurrentValue(100);
+        spring1.setEndValue(0);
     }
 
     private void setupRecyclerView() {
