@@ -9,6 +9,7 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
 import com.facebook.rebound.SimpleSpringListener;
 import com.facebook.rebound.Spring;
@@ -75,9 +76,16 @@ public class MainActivity extends AppCompatActivity {
 ////        mSmoothScroller.forceVerticalSnap(ConstantSmoothScroller.SNAP_TO_END);
 //        recyclerView.getLayoutManager().startSmoothScroll(mSmoothScroller);
 
-        prevTime = SystemClock.elapsedRealtime();
-        spring1.setCurrentValue(100);
-        spring1.setEndValue(0);
+//        prevTime = SystemClock.elapsedRealtime();
+//        spring1.setCurrentValue(100);
+//        spring1.setEndValue(0);
+
+        recyclerView.fling(0, -2000);
+    }
+
+    public void onRowClicked(View v) {
+        TextView tv = (TextView) v.findViewById(R.id.text);
+//        Log.d("yolo", "text clicked: " + tv.getText().toString());
     }
 
     private void setupRecyclerView() {

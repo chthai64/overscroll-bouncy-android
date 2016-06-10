@@ -48,7 +48,7 @@ public class DecelerateSmoothScroller extends LinearSmoothScroller {
         final int time = calculateTimeForDeceleration(distance);
 
 //        Log.d(TAG, "dy: " + dy + ", snapPref: " + getHorizontalSnapPreference());
-        Log.d(TAG, "onTargetFound, distance: " + distance + ", time: " + time);
+//        Log.d(TAG, "onTargetFound, distance: " + distance + ", time: " + time);
 
         if (time > 0) {
             action.update(-dx, -dy, time, new DecelerateInterpolator(1.0f));

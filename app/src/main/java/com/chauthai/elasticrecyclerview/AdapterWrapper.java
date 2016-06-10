@@ -100,9 +100,11 @@ public class AdapterWrapper extends RecyclerView.Adapter {
     }
 
     private long prevTime = SystemClock.elapsedRealtime();
+    private double speed = 0;
+
     private boolean isScrollBack = false;
     private boolean footerAlreadyVisible = false;
-    private int minDistanceToScrollBack = 0;
+    private int minDistanceToScrollBack = 1;
     private boolean shouldUseSpring = false;
 
     private boolean lockScroll = false;
@@ -112,16 +114,31 @@ public class AdapterWrapper extends RecyclerView.Adapter {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 int state = recyclerView.getScrollState();
-
-                if (state == RecyclerView.SCROLL_STATE_DRAGGING)
-                    return;
-
-                // is scrolling using scrollBY() method.
-                if (state == RecyclerView.SCROLL_STATE_IDLE && dy != 0)
-                    return;
+                boolean usingScrollBy = (state == RecyclerView.SCROLL_STATE_IDLE && dy != 0);
 
                 long currTime = SystemClock.elapsedRealtime(); // TODO: handle when delta time is 0
-                double speed = (double) dy / (currTime - prevTime);
+                long delta = currTime - prevTime;
+
+                if (firstScrollBy) {
+//                    Log.d("yolo", "adding dy");
+                    firstScrollBy = false;
+                    dy = getFooterVisibleLength();
+                }
+                speed = (double) dy / (currTime - prevTime);
+
+//                if (speed > 0)
+//                    Log.d("yolo", "speed: " + format(speed) + ", dy: " + dy + ", deltaTime: " + delta);
+
+                if (state == RecyclerView.SCROLL_STATE_DRAGGING) {
+                    prevTime = currTime;
+                    return;
+                }
+
+                // is scrolling using scrollBY() method.
+                if (usingScrollBy) {
+                    prevTime = currTime;
+                    return;
+                }
 
                 int footerVisible = getFooterVisibleLength();
 
@@ -130,10 +147,11 @@ public class AdapterWrapper extends RecyclerView.Adapter {
                     isScrollBack = false;
 
                     if (!mSpringFooter.isAtRest()) {
-                        Log.d("yolo", "rest");
+                        Log.d("yolo", "rest onScrolled");
                         mSpringFooter.setAtRest();
                     }
-                    minDistanceToScrollBack = 0;
+
+                    minDistanceToScrollBack = 1;
                     prevTime = currTime;
                     return;
                 }
@@ -160,6 +178,7 @@ public class AdapterWrapper extends RecyclerView.Adapter {
                         Log.d("yolo", "setLength 1: " + footerVisible);
                         scrollBack(footerVisible);
                     } else {
+                        Log.d("yolo", "reducing speed.");
                         reduceScrollSpeed(footerVisible, speed);
                     }
                 } else if (footerVisible >= minDistanceToScrollBack) {
@@ -195,15 +214,15 @@ public class AdapterWrapper extends RecyclerView.Adapter {
             public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
                 switch (e.getAction()) {
                     case MotionEvent.ACTION_DOWN:
+                        prevTime = SystemClock.elapsedRealtime();
                         shouldUseSpring = false;
 
                         if (!mSpringFooter.isAtRest()) {
-                            Log.d("yolo", "rest");
+                            Log.d("yolo", "rest onIntercept");
                             mSpringFooter.setAtRest();
                         }
                         isScrollBack = false;
                         rv.stopScroll();
-
                         break;
 
                     case MotionEvent.ACTION_MOVE:
@@ -211,22 +230,15 @@ public class AdapterWrapper extends RecyclerView.Adapter {
 
                     case MotionEvent.ACTION_CANCEL:
                     case MotionEvent.ACTION_UP:
-                        int footerVisible = getFooterVisibleLength();
-                        if (footerVisible > 0) {
-                            Log.d("yolo", "setLength onIntercept");
-                            scrollBack(footerVisible);
-                        }
-
-                        shouldUseSpring = true;
+                        onActionUp();
                         break;
                 }
 
                 mGestureDetector.onTouchEvent(e);
 
-                if (lockScroll)
-                    return true;
-
-                return false;
+                // return true so that RecyclerView won't scroll when the user scroll.
+                // We scroll it using scrollBy().
+                return getFooterVisibleLength() > 0;
             }
 
             @Override
@@ -236,19 +248,32 @@ public class AdapterWrapper extends RecyclerView.Adapter {
                 switch (e.getAction()) {
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
-                        lockScroll = false;
-
-                        int footerVisible = getFooterVisibleLength();
-                        if (footerVisible > 0) {
-                            Log.d("yolo", "setLength onIntercept");
-                            scrollBack(footerVisible);
-                        }
-
-                        shouldUseSpring = true;
+                        onActionUp();
                         break;
                 }
             }
         });
+    }
+
+    private void onActionUp() {
+        lockScroll = false;
+
+        int footerVisible = getFooterVisibleLength();
+        if (footerVisible > 0) {
+            minDistanceToScrollBack = getMinDistanceToScrollBack(speed);
+            Log.d("yolo", "threshold: " + format(minDistanceToScrollBack) + ", speed: " + (int) speed);
+
+
+            if (footerVisible < minDistanceToScrollBack) {
+                Log.d("yolo", "REDUCING ON ACTION UP..........................");
+                reduceScrollSpeed(footerVisible, speed);
+            } else {
+                Log.d("yolo", "setLength onActionUp");
+                scrollBack(footerVisible);
+            }
+        }
+
+        shouldUseSpring = true;
     }
 
     private final Object lockSpring = new Object();
@@ -258,14 +283,19 @@ public class AdapterWrapper extends RecyclerView.Adapter {
             isScrollBack = true;
             isFirstValue = true;
 
-            mRecyclerView.stopScroll();
+//            mRecyclerView.stopScroll();
             mSpringFooter.setCurrentValue(footerVisible);
             mSpringFooter.setEndValue(0);
         }
     }
 
+    /**
+     * Compute the over scroll threshold to scroll back.
+     * @param speed px per ms
+     * @return pixels
+     */
     private int getMinDistanceToScrollBack(double speed) {
-        return (int) Math.min((footerSizePx / SPEED_FACTOR * pxToDp(speed)), footerSizePx);
+        return (int) Math.min((footerSizePx / SPEED_FACTOR * pxToDp(Math.abs(speed))), footerSizePx);
 
     }
 
@@ -355,32 +385,51 @@ public class AdapterWrapper extends RecyclerView.Adapter {
         }
     }
 
+    private boolean firstScrollBy = false;
+    private int scrollByCount = 0;
     private final GestureDetectorCompat mGestureDetector = new GestureDetectorCompat(mContext,
             new GestureDetector.SimpleOnGestureListener() {
                 @Override
                 public boolean onDown(MotionEvent e) {
+                    scrollByCount = 0;
                     return true;
                 }
 
                 @Override
                 public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-//                    Log.d("yolo", "dy: " + distanceY);
+                    Log.d("yolo", "dy: " + distanceY);
 
                     int footerVisible = getFooterVisibleLength();
-                    lockScroll = footerVisible > 0 && distanceY > 0;
-
+//                    lockScroll = footerVisible > 0;
+//
 //                    Log.d("yolo", "lockscroll: " + lockScroll);
-                    if (lockScroll) {
-                        double ratioVisible = (double) footerVisible / footerSizePx;
-                        double scrollDist =  Math.max(0, distanceY - distanceY * ratioVisible);
+                    if (footerVisible > 0) {
+                        scrollByCount++;
+                        firstScrollBy = (scrollByCount == 1);
 
+                        double ratioVisible = (double) footerVisible / footerSizePx;
+                        double scrollDist = distanceY - distanceY * ratioVisible;
+
+                        if (distanceY > 0) {
+                            scrollDist = Math.abs(scrollDist);
+                        } else {
+                            scrollDist = -Math.abs(scrollDist);
+                        }
+
+                        Log.d("yolo", "scrollBy: " + scrollDist);
                         mRecyclerView.scrollBy(0, (int) scrollDist);
                     }
 
                     return true;
                 }
 
+                @Override
+                public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                    Log.d("yolo", "fling: " + velocityY);
+//                    mRecyclerView.fling(0, (int) -velocityY);
 
+                    return true;
+                }
             });
 
     private final RecyclerView.ItemDecoration mItemDecoration = new RecyclerView.ItemDecoration() {
