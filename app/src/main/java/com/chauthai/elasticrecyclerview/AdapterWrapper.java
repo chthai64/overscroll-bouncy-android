@@ -2,14 +2,13 @@ package com.chauthai.elasticrecyclerview;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.graphics.PointF;
 import android.graphics.Rect;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.LinearSmoothScroller;
 import android.support.v7.widget.RecyclerView;
-import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -22,7 +21,9 @@ import com.facebook.rebound.Spring;
 import com.facebook.rebound.SpringConfig;
 import com.facebook.rebound.SpringSystem;
 
+import java.util.LinkedList;
 import java.util.Locale;
+import java.util.Queue;
 
 /**
  * Created by Chau Thai on 5/17/16.
@@ -50,6 +51,8 @@ public class AdapterWrapper extends RecyclerView.Adapter {
     private View footerView;
     private Spring mSpringFooter;
     private DecelerateSmoothScroller mScrollerFooter;
+
+    private final Handler mHandlerUI = new Handler(Looper.getMainLooper());
 
     public AdapterWrapper(Context context, RecyclerView recyclerView, RecyclerView.Adapter adapter) {
         mContext = context;
@@ -120,7 +123,7 @@ public class AdapterWrapper extends RecyclerView.Adapter {
                 long delta = currTime - prevTime;
 
                 if (firstScrollBy) {
-//                    Log.d("yolo", "adding dy");
+                    Log.d("yolo", "adding dy");
                     firstScrollBy = false;
                     dy = getFooterVisibleLength();
                 }
@@ -212,6 +215,8 @@ public class AdapterWrapper extends RecyclerView.Adapter {
         mRecyclerView.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
             @Override
             public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
+//                Log.d("yolo", "on intercept");
+
                 switch (e.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         prevTime = SystemClock.elapsedRealtime();
@@ -234,6 +239,7 @@ public class AdapterWrapper extends RecyclerView.Adapter {
                         break;
                 }
 
+                mGestureOnIntercept = true;
                 mGestureDetector.onTouchEvent(e);
 
                 // return true so that RecyclerView won't scroll when the user scroll.
@@ -243,11 +249,15 @@ public class AdapterWrapper extends RecyclerView.Adapter {
 
             @Override
             public void onTouchEvent(RecyclerView rv, MotionEvent e) {
+//                Log.d("yolo", "on touch");
+
+                mGestureOnIntercept = false;
                 mGestureDetector.onTouchEvent(e);
 
                 switch (e.getAction()) {
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
+                        mGestureOnIntercept = true;
                         onActionUp();
                         break;
                 }
@@ -283,7 +293,8 @@ public class AdapterWrapper extends RecyclerView.Adapter {
             isScrollBack = true;
             isFirstValue = true;
 
-//            mRecyclerView.stopScroll();
+            Log.d("yolo", "stop scroll");
+            mRecyclerView.stopScroll();
             mSpringFooter.setCurrentValue(footerVisible);
             mSpringFooter.setEndValue(0);
         }
@@ -300,12 +311,16 @@ public class AdapterWrapper extends RecyclerView.Adapter {
     }
 
     private void reduceScrollSpeed(int currentVisible, double speed) {
+        mRecyclerView.stopScroll();
         int distToStop = minDistanceToScrollBack;
+
+        Log.d("yolo", "currVisible: " + currentVisible + ", distToStop: " + distToStop + ", initSpeed: " + (float) Math.abs(speed));
 
         mScrollerFooter.setTargetPosition(getItemCount() - 1);
         mScrollerFooter.setDistanceToStop(distToStop);
         mScrollerFooter.setInitialSpeed((float) Math.abs(speed));
         mLayoutManager.startSmoothScroll(mScrollerFooter);
+//        smoothScrollInUI(mScrollerFooter);
     }
 
     private int getScrollPosition() {
@@ -347,17 +362,21 @@ public class AdapterWrapper extends RecyclerView.Adapter {
                     double springLength = spring.getCurrentDisplacementDistance();
                     double diff = (springLength - visibleLength);
 
-//                    Log.d("yolo", "spring length: " + format(springLength) +
-//                            ", visible length: " + visibleLength + ", diff: " + format(diff));
+                    Log.d("yolo", "spring length: " + format(springLength) +
+                            ", visible length: " + visibleLength + ", diff: " + format(diff)
+                            + ", flingOverScrollBack: " + mFlingOverScrollBack
+                    );
 
-                    if (diff < 0) {
+                    if (diff <= 0) {
                         // discard the first value
                         if (isFirstValue) {
                             isFirstValue = false;
                             return;
                         }
 
-                        mRecyclerView.stopScroll();
+                        if (!mFlingOverScrollBack) {
+                            mRecyclerView.stopScroll();
+                        }
                         mRecyclerView.scrollBy(0, (int) diff);
                     }
 
@@ -387,17 +406,21 @@ public class AdapterWrapper extends RecyclerView.Adapter {
 
     private boolean firstScrollBy = false;
     private int scrollByCount = 0;
+    private boolean mGestureOnIntercept = true;
+    private boolean mFlingOverScrollBack = false;  // fling back while over scrolled.
+
     private final GestureDetectorCompat mGestureDetector = new GestureDetectorCompat(mContext,
             new GestureDetector.SimpleOnGestureListener() {
                 @Override
                 public boolean onDown(MotionEvent e) {
                     scrollByCount = 0;
+                    mFlingOverScrollBack = false;
                     return true;
                 }
 
                 @Override
                 public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-                    Log.d("yolo", "dy: " + distanceY);
+//                    Log.d("yolo", "dy: " + distanceY);
 
                     int footerVisible = getFooterVisibleLength();
 //                    lockScroll = footerVisible > 0;
@@ -420,17 +443,53 @@ public class AdapterWrapper extends RecyclerView.Adapter {
                         mRecyclerView.scrollBy(0, (int) scrollDist);
                     }
 
+                    // still in onTouchEvent, manually scroll the recycler view.
+                    else if (footerVisible == 0 && !mGestureOnIntercept) {
+//                        Log.d("yolo", "scroll in onTouch");
+                        mRecyclerView.scrollBy((int) distanceX, (int) distanceY);
+                    }
+
                     return true;
                 }
 
                 @Override
-                public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                    Log.d("yolo", "fling: " + velocityY);
-//                    mRecyclerView.fling(0, (int) -velocityY);
+                public boolean onFling(MotionEvent e1, MotionEvent e2, final float velocityX, final float velocityY) {
+                    Log.d("yolo", "onFling, mGestureOnIntercept: " + mGestureOnIntercept + ", vel: " + velocityY);
+
+                    if (!mGestureOnIntercept && velocityY > 0) {
+                        mHandlerUI.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                mFlingOverScrollBack = true;
+                                mRecyclerView.fling((int) -velocityX, (int) -velocityY);
+                                Log.d("yolo", "fling: " + velocityY);
+                            }
+                        });
+                    }
 
                     return true;
                 }
             });
+
+    private void flingInUI(final int velocityX, final int velocityY) {
+        mHandlerUI.post(new Runnable() {
+            @Override
+            public void run() {
+                mRecyclerView.fling(velocityX, velocityY);
+                Log.d("yolo", "fling: " + velocityY + ", isScrollBack: " + isScrollBack);
+            }
+        });
+    }
+
+    private void smoothScrollInUI(final RecyclerView.SmoothScroller smoothScroller) {
+        mHandlerUI.post(new Runnable() {
+            @Override
+            public void run() {
+                mLayoutManager.startSmoothScroll(smoothScroller);
+            }
+        });
+
+    }
 
     private final RecyclerView.ItemDecoration mItemDecoration = new RecyclerView.ItemDecoration() {
         @Override
@@ -464,6 +523,15 @@ public class AdapterWrapper extends RecyclerView.Adapter {
                 return "settling";
         }
         return "";
+    }
+
+    private class Vector {
+        int x, y;
+
+        public Vector(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
     }
 }
 
