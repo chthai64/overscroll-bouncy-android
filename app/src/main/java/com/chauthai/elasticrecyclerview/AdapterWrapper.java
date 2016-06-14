@@ -362,10 +362,10 @@ public class AdapterWrapper extends RecyclerView.Adapter {
                     double springLength = spring.getCurrentDisplacementDistance();
                     double diff = (springLength - visibleLength);
 
-                    Log.d("yolo", "spring length: " + format(springLength) +
-                            ", visible length: " + visibleLength + ", diff: " + format(diff)
-                            + ", flingOverScrollBack: " + mFlingOverScrollBack
-                    );
+//                    Log.d("yolo", "spring length: " + format(springLength) +
+//                            ", visible length: " + visibleLength + ", diff: " + format(diff)
+//                            + ", flingOverScrollBack: " + mFlingOverScrollBack
+//                    );
 
                     if (diff <= 0) {
                         // discard the first value
