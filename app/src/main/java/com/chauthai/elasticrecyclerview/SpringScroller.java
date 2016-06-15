@@ -8,14 +8,21 @@ import com.facebook.rebound.SpringSystem;
 /**
  * Created by Chau Thai on 6/8/16.
  */
-public class SpringScroller {
-    private static final SpringConfig DEFAULT_CONFIG = new SpringConfig(100, 20);
+public class SpringScroller extends SimpleSpringListener {
+    private static final SpringConfig DEFAULT_CONFIG = new SpringConfig(1000, 200);
     private final SpringSystem mSpringSystem = SpringSystem.create();
 
     private Spring mSpringX;
     private Spring mSpringY;
 
-    public SpringScroller() {
+    private SpringScrollerListener mListener;
+
+    public interface SpringScrollerListener {
+        void onUpdate(int currX, int currY);
+        void onAtRest();
+    }
+
+    public SpringScroller(SpringScrollerListener listener) {
         mSpringX = mSpringSystem
                 .createSpring()
                 .setSpringConfig(DEFAULT_CONFIG);
@@ -23,6 +30,11 @@ public class SpringScroller {
         mSpringY = mSpringSystem
                 .createSpring()
                 .setSpringConfig(DEFAULT_CONFIG);
+
+        mSpringX.addListener(this);
+        mSpringY.addListener(this);
+
+        mListener = listener;
     }
 
     public void setConfig(double tension, double friction) {
@@ -31,7 +43,24 @@ public class SpringScroller {
         mSpringY.setSpringConfig(config);
     }
 
-    public boolean isFinished() {
+    /**
+     * Set vertical and horizontal distances. It will scroll back to 0.
+     * @param distanceX vertical distance.
+     * @param distanceY horizontal distance.
+     */
+    public void startScroll(int distanceX, int distanceY) {
+        mSpringX.setCurrentValue(distanceX);
+        mSpringY.setCurrentValue(distanceY);
+        mSpringX.setEndValue(0);
+        mSpringY.setEndValue(0);
+    }
+
+    public void stopScroll() {
+        mSpringX.setAtRest();
+        mSpringY.setAtRest();
+    }
+
+    public boolean isAtRest() {
         return mSpringX.isAtRest() && mSpringY.isAtRest();
     }
 
@@ -41,5 +70,19 @@ public class SpringScroller {
 
     public int getCurrY() {
         return (int) Math.round(mSpringY.getCurrentValue());
+    }
+
+    @Override
+    public void onSpringUpdate(Spring spring) {
+        if (mListener != null) {
+            mListener.onUpdate(getCurrX(), getCurrY());
+        }
+    }
+
+    @Override
+    public void onSpringAtRest(Spring spring) {
+        if (mListener != null && isAtRest()) {
+            mListener.onAtRest();
+        }
     }
 }
