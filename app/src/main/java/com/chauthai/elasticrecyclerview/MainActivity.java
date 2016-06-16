@@ -53,18 +53,11 @@ public class MainActivity extends AppCompatActivity {
         spring1.addListener(new SimpleSpringListener() {
             @Override
             public void onSpringUpdate(Spring spring) {
-                long currTime = SystemClock.elapsedRealtime();
-                long delta = currTime - prevTime;
-                prevTime = currTime;
-
-                Log.d("yolo", "delta: " + delta + " ms");
             }
         });
 
     }
 
-
-    private long prevTime = 0;
 
     private static final double TENSION = 100;
     private static final double FRICTION = 50;
@@ -77,10 +70,10 @@ public class MainActivity extends AppCompatActivity {
 //        recyclerView.getLayoutManager().startSmoothScroll(mSmoothScroller);
 
 //        prevTime = SystemClock.elapsedRealtime();
-//        spring1.setCurrentValue(100);
+//        spring1.setCurrentValue(-100);
 //        spring1.setEndValue(0);
 
-        recyclerView.fling(0, -2000);
+//        recyclerView.fling(0, -2000);
     }
 
     public void onRowClicked(View v) {
