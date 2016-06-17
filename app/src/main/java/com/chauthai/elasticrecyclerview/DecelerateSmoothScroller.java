@@ -13,6 +13,8 @@ import android.view.animation.DecelerateInterpolator;
  */
 public class DecelerateSmoothScroller extends LinearSmoothScroller {
     private static final String TAG = "yolo";
+
+    private static final float DECELERATE_FACTOR = 2.0f;
     private float mInitialSpeed = 1; // px per ms
     private int mDistanceToStop = 100;
 
@@ -42,8 +44,7 @@ public class DecelerateSmoothScroller extends LinearSmoothScroller {
     @Override
     protected void onTargetFound(View targetView, RecyclerView.State state, Action action) {
         final int dx = calculateDxToMakeVisible(targetView, getHorizontalSnap());
-//        final int dy = calculateDyToMakeVisible(targetView, getVerticalSnap());
-        final int dy = -mDistanceToStop;
+        final int dy = (mScrollVector.y > 0)? -mDistanceToStop : mDistanceToStop;
         final int distance = (int) Math.sqrt(dx * dx + dy * dy);
         final int time = calculateTimeForDeceleration(distance);
 
@@ -51,7 +52,7 @@ public class DecelerateSmoothScroller extends LinearSmoothScroller {
 //        Log.d(TAG, "onTargetFound, distance: " + distance + ", time: " + time);
 
         if (time > 0) {
-            action.update(-dx, -dy, time, new DecelerateInterpolator(1.0f));
+            action.update(-dx, -dy, time, new DecelerateInterpolator(DECELERATE_FACTOR));
         }
     }
 
