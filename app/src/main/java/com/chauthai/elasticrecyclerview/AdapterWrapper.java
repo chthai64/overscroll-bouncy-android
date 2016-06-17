@@ -6,6 +6,7 @@ import android.graphics.PointF;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -15,6 +16,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 
 import java.util.Locale;
 
@@ -23,7 +25,7 @@ import java.util.Locale;
  */
 @SuppressWarnings("FieldCanBeLocal")
 public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroller.SpringScrollerListener {
-    private static final double DEFAULT_SPEED_FACTOR = 5;
+    private static final double DEFAULT_SPEED_FACTOR = 6;
     private static final int DEFAULT_GAP_LIMIT = 300; // dp
     private static final int GAP_SIZE = 1000; // dp
 
@@ -54,7 +56,7 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
 
     private final Handler mHandlerUI = new Handler(Looper.getMainLooper());
 
-    public AdapterWrapper(Context context, RecyclerView recyclerView, RecyclerView.Adapter adapter) {
+    public AdapterWrapper(Context context, final RecyclerView recyclerView, RecyclerView.Adapter adapter) {
         if (recyclerView == null)
             throw new RuntimeException("null RecyclerView");
 
@@ -64,6 +66,12 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
         if (!(recyclerView.getLayoutManager() instanceof LinearLayoutManager))
             throw new RuntimeException("RecyclerView must use LinearLayoutManager");
 
+        recyclerView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                Log.d("yolo", "height: " + recyclerView.getHeight());
+            }
+        });
 
         mContext = context;
         mAdapter = adapter;
@@ -219,6 +227,7 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
                 }
             }
         });
+
     }
 
     private void initTouchListener() {
@@ -382,28 +391,6 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
         return 0;
     }
 
-    private int getFooterVisibleLength() {
-        if (mLayoutManager.findLastVisibleItemPosition() != getItemCount() - 1)
-            return 0;
-
-        return Math.max(0, mRecyclerView.getHeight() - mFooterView.getTop() - mRecyclerView.getPaddingBottom());
-    }
-
-    private int getHeaderVisibleLength() {
-        if (mLayoutManager.findFirstVisibleItemPosition() != 0)
-            return 0;
-
-        return Math.max(0, mHeaderView.getBottom() - mRecyclerView.getPaddingTop());
-    }
-
-    private View createGapView() {
-        View view = new View(mContext);
-        view.setLayoutParams(new RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT,
-                (int) dpToPx(GAP_SIZE)));
-//        view.setBackgroundColor(ContextCompat.getColor(mContext, android.R.color.holo_green_light));
-        return view;
-    }
-
     private boolean mFirstScrollBy = false;
     private boolean mGestureOnIntercept = true;
     private boolean mFlingOverScrollBack = false;  // fling back while over scrolled.
@@ -464,7 +451,7 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
                         mHandlerUI.post(new Runnable() {
                             @Override
                             public void run() {
-//                                Log.d("yolo", "fling " + (int) -velocityY);
+                                Log.d("yolo", "fling1: " + (int) -velocityY);
                                 mRecyclerView.fling((int) -velocityX, (int) -velocityY);
                             }
                         });
@@ -476,7 +463,7 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
                             @Override
                             public void run() {
                                 mFlingOverScrollBack = true;
-//                                Log.d("yolo", "fling " + (int) -velocityY);
+                                Log.d("yolo", "fling2: " + (int) -velocityY);
                                 mRecyclerView.fling((int) -velocityX, (int) -velocityY);
                             }
                         });
@@ -485,6 +472,59 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
                     return true;
                 }
             });
+
+    private int contentHeightLessThanView() {
+        return Math.max(mRecyclerView.getHeight() - estimateContentHeight(), 0);
+    }
+
+    private int estimateContentHeight() {
+        for (int i = 0; i < mAdapter.getItemCount(); i++) {
+            View view = mLayoutManager.findViewByPosition(i + 1);
+            if (view != null) {
+                int itemHeight = view.getHeight();
+                itemHeight += mLayoutManager.getTopDecorationHeight(view) + mLayoutManager.getBottomDecorationHeight(view);
+
+                ViewGroup.LayoutParams params = view.getLayoutParams();
+                if (params != null && params instanceof ViewGroup.MarginLayoutParams) {
+                    itemHeight += ((ViewGroup.MarginLayoutParams) params).bottomMargin;
+                    itemHeight += ((ViewGroup.MarginLayoutParams) params).topMargin;
+                }
+
+                int total =  itemHeight * mAdapter.getItemCount();
+//                Log.d("yolo", "estimate: " + total + ", recycler height: " + mRecyclerView.getHeight());
+
+                return total;
+            }
+        }
+
+        return 0;
+    }
+
+    private int getFooterVisibleLength() {
+        if (mLayoutManager.findLastVisibleItemPosition() != getItemCount() - 1)
+            return 0;
+
+        return Math.max(
+                0,
+                mRecyclerView.getHeight() - mFooterView.getTop() - mRecyclerView.getPaddingBottom()
+                - contentHeightLessThanView()
+        );
+    }
+
+    private int getHeaderVisibleLength() {
+        if (mLayoutManager.findFirstVisibleItemPosition() != 0)
+            return 0;
+
+        return Math.max(0, mHeaderView.getBottom() - mRecyclerView.getPaddingTop());
+    }
+
+    private View createGapView() {
+        View view = new View(mContext);
+        view.setLayoutParams(new RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT,
+                (int) dpToPx(GAP_SIZE)));
+        view.setBackgroundColor(ContextCompat.getColor(mContext, android.R.color.holo_green_light));
+        return view;
+    }
 
     private class FooterHolder extends RecyclerView.ViewHolder {
         public FooterHolder(View v) {

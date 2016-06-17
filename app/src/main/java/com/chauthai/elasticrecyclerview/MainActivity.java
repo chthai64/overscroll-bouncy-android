@@ -20,7 +20,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+    private static final int SIZE = 20;
+
     private RecyclerView recyclerView;
+    private LinearLayoutManager layoutManager;
+    private ElasticAdapter adapter;
+
     private ConstantSmoothScroller mSmoothScroller;
     private SeekBar seekBar;
     Spring spring1;
@@ -74,6 +79,8 @@ public class MainActivity extends AppCompatActivity {
 //        spring1.setEndValue(0);
 
 //        recyclerView.fling(0, -2000);
+
+        Log.d("yolo", "pos: " + recyclerView.getVerticalScrollbarPosition());
     }
 
     public void onRowClicked(View v) {
@@ -82,10 +89,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupRecyclerView() {
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
+        layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
 
-        ElasticAdapter adapter = new ElasticAdapter(recyclerView, this, getDataSet(20));
+         adapter = new ElasticAdapter(recyclerView, this, getDataSet(SIZE));
         AdapterWrapper adapterWrapper = new AdapterWrapper(this, recyclerView, adapter);
         recyclerView.setAdapter(adapterWrapper);
 
