@@ -2,10 +2,10 @@ package com.chauthai.elasticrecyclerview;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.PointF;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -23,7 +23,7 @@ import java.util.Locale;
  */
 @SuppressWarnings("FieldCanBeLocal")
 public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroller.SpringScrollerListener {
-    private static final double DEFAULT_SPEED_FACTOR = 10;
+    private static final double DEFAULT_SPEED_FACTOR = 5;
     private static final int DEFAULT_GAP_LIMIT = 300; // dp
     private static final int GAP_SIZE = 1000; // dp
 
@@ -42,7 +42,7 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
     private final View mFooterView;
     private final View mHeaderView;
 
-    private final DecelerateSmoothScroller mScrollerFooter;
+    private final DecelerateSmoothScroller mScroller;
     private final SpringScroller mSpringScroller;
 
     private long mPrevTime = SystemClock.elapsedRealtime();
@@ -74,7 +74,7 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
         mHeaderView = createGapView();
 
         mLayoutManager = (LinearLayoutManager) mRecyclerView.getLayoutManager();
-        mScrollerFooter = new DecelerateSmoothScroller(context);
+        mScroller = new DecelerateSmoothScroller(context);
         mSpringScroller = new SpringScroller(this);
 
         initRecyclerView();
@@ -154,7 +154,9 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
                     diff *=-1;
                 }
 
-                mRecyclerView.scrollBy(0, diff);
+                if (diff != 0) {
+                    mRecyclerView.scrollBy(0, diff);
+                }
             }
         }
     }
@@ -203,11 +205,14 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
 
                             // scroll back
                             if (headerVisible >= minDistanceToScrollBack || footerVisible >= minDistanceToScrollBack) {
+                                Log.d("yolo", "scrollBack 1");
                                 scrollBack(headerVisible, footerVisible);
                             } else {
-//                                reduceScrollSpeed(mSpeed);
+                                Log.d("yolo", "reduce speed onScrolled");
+                                reduceScrollSpeed(mSpeed, headerVisible, footerVisible);
                             }
                         } else if (headerVisible >= minDistanceToScrollBack || footerVisible >= minDistanceToScrollBack) {
+                            Log.d("yolo", "scrollBack 2");
                             scrollBack(headerVisible, footerVisible);
                         }
                     }
@@ -265,6 +270,28 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
         });
     }
 
+    private void onActionUp() {
+        final int footerVisible = getFooterVisibleLength();
+        final int headerVisible = getHeaderVisibleLength();
+        final boolean overScrolled = (footerVisible > 0 || headerVisible > 0);
+
+        if (overScrolled) {
+            minDistanceToScrollBack = getMinDistanceToScrollBack(mSpeed, headerVisible, footerVisible);
+            boolean reduceHeaderSpeed = (headerVisible > 0) && (headerVisible < minDistanceToScrollBack);
+            boolean reduceFooterSpeed = (footerVisible > 0) && (footerVisible < minDistanceToScrollBack);
+
+            if (reduceHeaderSpeed || reduceFooterSpeed) {
+                Log.d("yolo", "reduce speed onActionUp");
+                reduceScrollSpeed(mSpeed, headerVisible, footerVisible);
+            } else {
+                Log.d("yolo", "scrollBack onActionUp");
+                scrollBack(headerVisible, footerVisible);
+            }
+        }
+
+        mShouldUseSpring = true;
+    }
+
     private boolean shouldInterceptTouch() {
         final int headerVisible = getHeaderVisibleLength();
         final int footerVisible = getFooterVisibleLength();
@@ -286,26 +313,6 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
 
         mSpeed = (double) dy / (currTime - mPrevTime);
         mPrevTime = currTime;
-    }
-
-    private void onActionUp() {
-        final int footerVisible = getFooterVisibleLength();
-        final int headerVisible = getHeaderVisibleLength();
-        final boolean overScrolled = (footerVisible > 0 || headerVisible > 0);
-
-        if (overScrolled) {
-            minDistanceToScrollBack = getMinDistanceToScrollBack(mSpeed, headerVisible, footerVisible);
-            boolean reduceHeaderSpeed = (headerVisible > 0) && (headerVisible < minDistanceToScrollBack);
-            boolean reduceFooterSpeed = (footerVisible > 0) && (footerVisible < minDistanceToScrollBack);
-
-            if (reduceHeaderSpeed || reduceFooterSpeed) {
-                reduceScrollSpeed(mSpeed);
-            } else {
-                scrollBack(headerVisible, footerVisible);
-            }
-        }
-
-        mShouldUseSpring = true;
     }
 
     private final Object lockSpring = new Object();
@@ -345,14 +352,21 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
 
     }
 
-    private void reduceScrollSpeed(double speed) {
+    private void reduceScrollSpeed(double speed, int headerVisible, int footerVisible) {
         mRecyclerView.stopScroll();
         int distToStop = minDistanceToScrollBack;
 
-        mScrollerFooter.setTargetPosition(getItemCount() - 1);
-        mScrollerFooter.setDistanceToStop(distToStop);
-        mScrollerFooter.setInitialSpeed((float) Math.abs(speed));
-        mLayoutManager.startSmoothScroll(mScrollerFooter);
+        if (headerVisible > 0) {
+            mScroller.setScrollVector(new PointF(0, -1));
+            mScroller.setTargetPosition(0);
+        } else {
+            mScroller.setScrollVector(new PointF(0, 1));
+            mScroller.setTargetPosition(getItemCount() - 1);
+        }
+
+        mScroller.setDistanceToStop(distToStop);
+        mScroller.setInitialSpeed((float) Math.abs(speed));
+        mLayoutManager.startSmoothScroll(mScroller);
     }
 
     private int getScrollPosition() {
@@ -443,14 +457,14 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
                     final boolean isFlingOverBack = gapVisible && !mGestureOnIntercept &&
                             ((headerVisible > 0 && velocityY < 0) || (footerVisible > 0 && velocityY > 0));
 
-                    Log.d("yolo", "gapVisible: " + gapVisible + ", isFlingOverBack: " + isFlingOverBack);
+//                    Log.d("yolo", "gapVisible: " + gapVisible + ", isFlingOverBack: " + isFlingOverBack);
 
                     // gaps are not visible, use regular fling.
                     if (!gapVisible && !mGestureOnIntercept) {
                         mHandlerUI.post(new Runnable() {
                             @Override
                             public void run() {
-                                Log.d("yolo", "fling " + (int) -velocityY);
+//                                Log.d("yolo", "fling " + (int) -velocityY);
                                 mRecyclerView.fling((int) -velocityX, (int) -velocityY);
                             }
                         });
@@ -462,7 +476,7 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
                             @Override
                             public void run() {
                                 mFlingOverScrollBack = true;
-                                Log.d("yolo", "fling " + (int) -velocityY);
+//                                Log.d("yolo", "fling " + (int) -velocityY);
                                 mRecyclerView.fling((int) -velocityX, (int) -velocityY);
                             }
                         });
