@@ -57,8 +57,10 @@ public class SpringScroller extends SimpleSpringListener {
     }
 
     public void stopScroll() {
-        mSpringX.setAtRest();
-        mSpringY.setAtRest();
+        if (!mSpringX.isAtRest())
+            mSpringX.setAtRest();
+        if (!mSpringY.isAtRest())
+            mSpringY.setAtRest();
     }
 
     public boolean isAtRest() {
