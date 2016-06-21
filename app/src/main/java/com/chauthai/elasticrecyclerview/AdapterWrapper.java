@@ -3,6 +3,7 @@ package com.chauthai.elasticrecyclerview;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
@@ -25,9 +26,11 @@ import java.util.Locale;
  */
 @SuppressWarnings("FieldCanBeLocal")
 public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroller.SpringScrollerListener {
-    private static final double DEFAULT_SPEED_FACTOR = 6;
+    private static final double DEFAULT_SPEED_FACTOR = 5;
     private static final int DEFAULT_GAP_LIMIT = 300; // dp
     private static final int GAP_SIZE = 1000; // dp
+
+    private static final int ESTIMATE_VIEW_COUNT = 5;
 
     private static final int VIEW_TYPE_HEADER = 1111;
     private static final int VIEW_TYPE_FOOTER = 2222;
@@ -49,6 +52,7 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
 
     private long mPrevTime = SystemClock.elapsedRealtime();
     private double mSpeed = 0;
+    private int mPrevFooterVisible = 0;
 
     private boolean mIsScrollBack = false;
     private int minDistanceToScrollBack = 1;
@@ -147,7 +151,9 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
                 diff -= visibleFooter;
             }
 
-            if (diff <= 0) {
+//            Log.d("yolo", "diff: " + diff + ", footer: " + visibleFooter + ", currY: " + currY);
+
+            if (diff < 0) {
                 // discard the first value
                 if (isSpringFirstValue) {
                     isSpringFirstValue = false;
@@ -159,10 +165,11 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
                 }
 
                 if (visibleHeader > 0) {
-                    diff *=-1;
+                    diff *= -1;
                 }
 
                 if (diff != 0) {
+//                    mPrevFooterVisible = Math.max(0, mPrevFooterVisible + diff);
                     mRecyclerView.scrollBy(0, diff);
                 }
             }
@@ -186,9 +193,17 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
 
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                if (footerOccupiesWholeView()) {
+                    mPrevFooterVisible = Math.max(0, mPrevFooterVisible + dy);
+                }
+
                 final int state = recyclerView.getScrollState();
                 final boolean usingScrollBy = (state == RecyclerView.SCROLL_STATE_IDLE && dy != 0);
                 final boolean isDragging = (state == RecyclerView.SCROLL_STATE_DRAGGING);
+
+//                Log.d("yolo", "header: " + getHeaderVisibleLength() + ", footer: " + getFooterVisibleLength()
+//                 + ", isScrollBack: " + mIsScrollBack + ", isDragging: " + isDragging + ", usingScrollBy: " + usingScrollBy
+//                 + ", minDistStop: " + minDistanceToScrollBack);
 
                 computeScrollSpeed(dy);
 
@@ -196,13 +211,23 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
                     final int footerVisible = getFooterVisibleLength();
                     final int headerVisible = getHeaderVisibleLength();
 
+                    final boolean scrolledBackToOtherSide = mIsScrollBack && ((dy > 0 && footerVisible > 0)
+                            || (dy < 0 && headerVisible > 0));
+
+                    if (scrolledBackToOtherSide) {
+                        Log.d("yolo", "scrolledBackToOtherSide");
+
+                        gapAlreadyVisible = true;
+                        mIsScrollBack = false;
+                        mSpringScroller.stopScroll();
+                        minDistanceToScrollBack = getMinDistanceToScrollBack(mSpeed, headerVisible, footerVisible);
+                    }
+
                     if (footerVisible == 0 && headerVisible == 0) {
                         gapAlreadyVisible = false;
                         mIsScrollBack = false;
 
-                        if (!mSpringScroller.isAtRest()) {
-                            mSpringScroller.stopScroll();
-                        }
+                        mSpringScroller.stopScroll();
                         minDistanceToScrollBack = 1;
 
                     } else if (!mIsScrollBack) {
@@ -239,9 +264,7 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
                         mPrevTime = SystemClock.elapsedRealtime();
                         mShouldUseSpring = false;
 
-                        if (!mSpringScroller.isAtRest()) {
-                            mSpringScroller.stopScroll();
-                        }
+                        mSpringScroller.stopScroll();
                         mIsScrollBack = false;
                         rv.stopScroll();
                         break;
@@ -358,7 +381,6 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
             return 0;
 
         return (int) Math.min((mGapLimitPx / mSpeedFactor * pxToDp(speed)), mGapLimitPx);
-
     }
 
     private void reduceScrollSpeed(double speed, int headerVisible, int footerVisible) {
@@ -478,44 +500,66 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
     }
 
     private int estimateContentHeight() {
-        for (int i = 0; i < mAdapter.getItemCount(); i++) {
+        long start = SystemClock.elapsedRealtime();
+
+        int total = 0;
+        int count = 0;
+
+        for (int i = mAdapter.getItemCount() - 1; i >= 0 && count < ESTIMATE_VIEW_COUNT; i--) {
             View view = mLayoutManager.findViewByPosition(i + 1);
+
             if (view != null) {
-                int itemHeight = view.getHeight();
-                itemHeight += mLayoutManager.getTopDecorationHeight(view) + mLayoutManager.getBottomDecorationHeight(view);
+                Rect rect = new Rect();
+                mLayoutManager.getDecoratedBoundsWithMargins(view, rect);
+                int itemHeight = Math.abs(rect.height());
 
-                ViewGroup.LayoutParams params = view.getLayoutParams();
-                if (params != null && params instanceof ViewGroup.MarginLayoutParams) {
-                    itemHeight += ((ViewGroup.MarginLayoutParams) params).bottomMargin;
-                    itemHeight += ((ViewGroup.MarginLayoutParams) params).topMargin;
-                }
-
-                int total =  itemHeight * mAdapter.getItemCount();
-//                Log.d("yolo", "estimate: " + total + ", recycler height: " + mRecyclerView.getHeight());
-
-                return total;
+                count++;
+                total += itemHeight;
             }
+        }
+
+
+        if (count > 0) {
+            double average = (double) total / count;
+
+            long time = SystemClock.elapsedRealtime() - start;
+            Log.d("yolo", "time: " + time + " ms");
+
+            return (int) (average * mAdapter.getItemCount());
         }
 
         return 0;
     }
 
     private int getFooterVisibleLength() {
-        if (mLayoutManager.findLastVisibleItemPosition() != getItemCount() - 1)
-            return 0;
+        if (footerOccupiesWholeView()) {
+            return mPrevFooterVisible;
+        }
 
-        return Math.max(
-                0,
-                mRecyclerView.getHeight() - mFooterView.getTop() - mRecyclerView.getPaddingBottom()
-                - contentHeightLessThanView()
+        // footer is not visible
+        if (mLayoutManager.findLastVisibleItemPosition() != getItemCount() - 1) {
+            mPrevFooterVisible = 0;
+            return 0;
+        }
+
+        int result = Math.max(0, mRecyclerView.getHeight() - mFooterView.getTop() -
+                mRecyclerView.getPaddingBottom() - contentHeightLessThanView()
         );
+
+        mPrevFooterVisible = result;
+        return result;
     }
 
     private int getHeaderVisibleLength() {
+        // header is not visible
         if (mLayoutManager.findFirstVisibleItemPosition() != 0)
             return 0;
 
         return Math.max(0, mHeaderView.getBottom() - mRecyclerView.getPaddingTop());
+    }
+
+    private boolean footerOccupiesWholeView() {
+        return (mAdapter.getItemCount() > 0 && mRecyclerView.findChildViewUnder(0,0) == mFooterView);
     }
 
     private View createGapView() {
