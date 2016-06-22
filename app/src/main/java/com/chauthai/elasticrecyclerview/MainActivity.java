@@ -1,20 +1,11 @@
 package com.chauthai.elasticrecyclerview;
 
-import android.graphics.PointF;
-import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.View;
 import android.widget.SeekBar;
-import android.widget.TextView;
-
-import com.facebook.rebound.SimpleSpringListener;
-import com.facebook.rebound.Spring;
-import com.facebook.rebound.SpringConfig;
-import com.facebook.rebound.SpringSystem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,11 +15,10 @@ public class MainActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private LinearLayoutManager layoutManager;
-    private ElasticAdapter adapter;
+    private MyAdapter adapter;
+    private OverScrollHelper overScrollHelper;
 
-    private ConstantSmoothScroller mSmoothScroller;
     private SeekBar seekBar;
-    Spring spring1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,13 +27,11 @@ public class MainActivity extends AppCompatActivity {
         recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         setupRecyclerView();
 
+
         seekBar = (SeekBar) findViewById(R.id.seekbar);
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mSmoothScroller.setScrollSpeed(progress);
-                mSmoothScroller.setTargetPosition(0);
-                recyclerView.getLayoutManager().startSmoothScroll(mSmoothScroller);
             }
 
             @Override
@@ -53,55 +41,24 @@ public class MainActivity extends AppCompatActivity {
             public void onStopTrackingTouch(SeekBar seekBar) {}
         });
 
-        spring1 = mSpringSystem.createSpring();
-        spring1.setSpringConfig(mSpringConfig);
-        spring1.addListener(new SimpleSpringListener() {
-            @Override
-            public void onSpringUpdate(Spring spring) {
-            }
-        });
-
     }
 
 
-    private static final double TENSION = 100;
-    private static final double FRICTION = 50;
-    private final SpringSystem mSpringSystem = SpringSystem.create();
-    private final SpringConfig mSpringConfig = new SpringConfig(TENSION, FRICTION);
-
     public void onButtonClick(View v) {
-//        mSmoothScroller.setTargetPosition(0);
-////        mSmoothScroller.forceVerticalSnap(ConstantSmoothScroller.SNAP_TO_END);
-//        recyclerView.getLayoutManager().startSmoothScroll(mSmoothScroller);
-
-//        spring1.setCurrentValue(-100);
-//        spring1.setEndValue(0);
-
-//        recyclerView.fling(0, -2000);
-
         recyclerView.scrollToPosition(adapter.getItemCount() - 1);
     }
 
-    public void onRowClicked(View v) {
-        TextView tv = (TextView) v.findViewById(R.id.text);
-//        Log.d("yolo", "text clicked: " + tv.getText().toString());
-    }
+    public void onRowClicked(View v) {}
 
     private void setupRecyclerView() {
         layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
 
-         adapter = new ElasticAdapter(recyclerView, this, getDataSet(SIZE));
-        AdapterWrapper adapterWrapper = new AdapterWrapper(this, recyclerView, adapter);
-        recyclerView.setAdapter(adapterWrapper);
+        adapter = new MyAdapter(this, getDataSet(SIZE));
 
+        overScrollHelper = new OverScrollHelper(this, recyclerView);
+        overScrollHelper.bindAdapter(adapter);
 
-        mSmoothScroller = new ConstantSmoothScroller(this) {
-            @Override
-            public PointF computeScrollVectorForPosition(int targetPosition) {
-                return new PointF(0, -1); // -1 scroll down
-            }
-        };
     }
 
     private List<String> getDataSet(int n) {

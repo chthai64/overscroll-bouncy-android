@@ -25,7 +25,7 @@ import java.util.Locale;
  * Created by Chau Thai on 5/17/16.
  */
 @SuppressWarnings("FieldCanBeLocal")
-public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroller.SpringScrollerListener {
+public class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.SpringScrollerListener {
     private static final double DEFAULT_SPEED_FACTOR = 5;
     private static final int DEFAULT_GAP_LIMIT = 300; // dp
     private static final int GAP_SIZE = 1000; // dp
@@ -61,7 +61,7 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
 
     private final Handler mHandlerUI = new Handler(Looper.getMainLooper());
 
-    public AdapterWrapper(Context context, final RecyclerView recyclerView, RecyclerView.Adapter adapter) {
+    public BouncyAdapter(Context context, final RecyclerView recyclerView, RecyclerView.Adapter adapter) {
         if (recyclerView == null)
             throw new RuntimeException("null RecyclerView");
 
