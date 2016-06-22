@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
 
 //        recyclerView.fling(0, -2000);
 
-        Log.d("yolo", "pos: " + recyclerView.getVerticalScrollbarPosition());
+        recyclerView.scrollToPosition(adapter.getItemCount() - 1);
     }
 
     public void onRowClicked(View v) {
