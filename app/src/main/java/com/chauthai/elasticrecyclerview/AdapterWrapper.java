@@ -216,8 +216,6 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
                             || (dy < 0 && headerVisible > 0));
 
                     if (scrolledBackToOtherSide) {
-                        Log.d("yolo", "scrolledBackToOtherSide");
-
                         gapAlreadyVisible = true;
                         mIsScrollBack = false;
                         mSpringScroller.stopScroll();
