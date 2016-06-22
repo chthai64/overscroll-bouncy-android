@@ -74,7 +74,6 @@ public class MainActivity extends AppCompatActivity {
 ////        mSmoothScroller.forceVerticalSnap(ConstantSmoothScroller.SNAP_TO_END);
 //        recyclerView.getLayoutManager().startSmoothScroll(mSmoothScroller);
 
-//        prevTime = SystemClock.elapsedRealtime();
 //        spring1.setCurrentValue(-100);
 //        spring1.setEndValue(0);
 
