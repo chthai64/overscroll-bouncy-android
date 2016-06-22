@@ -30,7 +30,8 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
     private static final int DEFAULT_GAP_LIMIT = 300; // dp
     private static final int GAP_SIZE = 1000; // dp
 
-    private static final int ESTIMATE_VIEW_COUNT = 5;
+    private static final int VIEW_COUNT_ESTIMATE_SIZE = 5;
+    private static final int MAX_ADAPTER_SIZE_TO_ESTIMATE = 20;
 
     private static final int VIEW_TYPE_HEADER = 1111;
     private static final int VIEW_TYPE_FOOTER = 2222;
@@ -500,12 +501,10 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
     }
 
     private int estimateContentHeight() {
-        long start = SystemClock.elapsedRealtime();
-
         int total = 0;
         int count = 0;
 
-        for (int i = mAdapter.getItemCount() - 1; i >= 0 && count < ESTIMATE_VIEW_COUNT; i--) {
+        for (int i = mAdapter.getItemCount() - 1; i >= 0 && count < VIEW_COUNT_ESTIMATE_SIZE; i--) {
             View view = mLayoutManager.findViewByPosition(i + 1);
 
             if (view != null) {
@@ -521,10 +520,6 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
 
         if (count > 0) {
             double average = (double) total / count;
-
-            long time = SystemClock.elapsedRealtime() - start;
-            Log.d("yolo", "time: " + time + " ms");
-
             return (int) (average * mAdapter.getItemCount());
         }
 
@@ -542,10 +537,13 @@ public class AdapterWrapper extends RecyclerView.Adapter implements SpringScroll
             return 0;
         }
 
-        int result = Math.max(0, mRecyclerView.getHeight() - mFooterView.getTop() -
-                mRecyclerView.getPaddingBottom() - contentHeightLessThanView()
-        );
+        int result = mRecyclerView.getHeight() - mFooterView.getTop() - mRecyclerView.getPaddingBottom();
 
+        if (mAdapter.getItemCount() <= MAX_ADAPTER_SIZE_TO_ESTIMATE) {
+            result -= contentHeightLessThanView();
+        }
+
+        result = Math.max(0, result);
         mPrevFooterVisible = result;
         return result;
     }
