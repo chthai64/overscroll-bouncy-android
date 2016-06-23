@@ -205,8 +205,6 @@ public class BouncyAdapter extends RecyclerView.Adapter implements SpringScrolle
 
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-//                Log.d("yolo", "header: " + getHeaderVisibleLength() + ", footer: " + getFooterVisibleLength());
-
                 if (footerOccupiesWholeView()) {
                     mPrevFooterVisible = Math.max(0, mPrevFooterVisible + (directionVertical()? dy : dx));
                 }
@@ -574,9 +572,17 @@ public class BouncyAdapter extends RecyclerView.Adapter implements SpringScrolle
 
         int result;
         if (directionVertical()) {
-            result = mRecyclerView.getHeight() - mFooterView.getTop() - mRecyclerView.getPaddingBottom();
+            if (!mLayoutManager.getReverseLayout()) {
+                result = getBottomVisible(mFooterView);
+            } else {
+                result = getTopVisible(mFooterView);
+            }
         } else {
-            result = mRecyclerView.getWidth() - mFooterView.getLeft() - mRecyclerView.getPaddingRight();
+            if (!mLayoutManager.getReverseLayout()) {
+                result = getRightVisible(mFooterView);
+            } else {
+                result = getLeftVisible(mFooterView);
+            }
         }
 
         if (mAdapter.getItemCount() <= mMaxAdapterSizeToEstimate) {
@@ -594,14 +600,45 @@ public class BouncyAdapter extends RecyclerView.Adapter implements SpringScrolle
             return 0;
 
         if (directionVertical()) {
-            return Math.max(0, mHeaderView.getBottom() - mRecyclerView.getPaddingTop());
+            if (!mLayoutManager.getReverseLayout()) {
+                return getTopVisible(mHeaderView);
+            } else {
+                return getBottomVisible(mHeaderView);
+            }
         }
 
-        return Math.max(0, mHeaderView.getRight() - mRecyclerView.getPaddingLeft());
+        if (!mLayoutManager.getReverseLayout()) {
+            return getLeftVisible(mHeaderView);
+        }
+
+        return getRightVisible(mHeaderView);
+    }
+
+    private int getTopVisible(View view) {
+        return Math.max(0, view.getBottom() - mRecyclerView.getPaddingTop());
+    }
+
+    private int getBottomVisible(View view) {
+        return Math.max(0, mRecyclerView.getHeight() - view.getTop() - mRecyclerView.getPaddingBottom());
+    }
+
+    private int getLeftVisible(View view) {
+        return Math.max(0, view.getRight() - mRecyclerView.getPaddingLeft());
+    }
+
+    private int getRightVisible(View view) {
+        return Math.max(0, mRecyclerView.getWidth() - view.getLeft() - mRecyclerView.getPaddingRight());
     }
 
     private boolean footerOccupiesWholeView() {
-        return (mAdapter.getItemCount() > 0 && mRecyclerView.findChildViewUnder(0,0) == mFooterView);
+        if (!mLayoutManager.getReverseLayout()) {
+            return (mAdapter.getItemCount() > 0 && mRecyclerView.findChildViewUnder(0, 0) == mFooterView);
+        }
+
+        final int lastX = mRecyclerView.getWidth() - 1;
+        final int lastY = mRecyclerView.getHeight() - 1;
+
+        return (mAdapter.getItemCount() > 0 && mRecyclerView.findChildViewUnder(lastX, lastY) == mFooterView);
     }
 
     private boolean directionVertical() {
@@ -616,9 +653,9 @@ public class BouncyAdapter extends RecyclerView.Adapter implements SpringScrolle
         final ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(width, height);
 
         if (directionVertical()) {
-            params.width = 0;
+            params.width = 1;
         } else {
-            params.height = 0;
+            params.height = 1;
         }
 
         view.setLayoutParams(params);
