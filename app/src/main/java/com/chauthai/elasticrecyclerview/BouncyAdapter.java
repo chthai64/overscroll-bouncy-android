@@ -142,6 +142,11 @@ public class BouncyAdapter extends RecyclerView.Adapter implements SpringScrolle
         mAdapter.onAttachedToRecyclerView(recyclerView);
     }
 
+    @Override
+    public void onDetachedFromRecyclerView(RecyclerView recyclerView) {
+        mAdapter.onDetachedFromRecyclerView(recyclerView);
+    }
+
     private boolean isSpringFirstValue = true;
 
     @Override
@@ -603,11 +608,20 @@ public class BouncyAdapter extends RecyclerView.Adapter implements SpringScrolle
 
     private View createGapView() {
         final View view = new View(mContext);
-        final int width = directionVertical()? RecyclerView.LayoutParams.MATCH_PARENT : (int) dpToPx(GAP_SIZE);
-        final int height = directionVertical()? (int) dpToPx(GAP_SIZE) : RecyclerView.LayoutParams.MATCH_PARENT;
+        final int width = directionVertical()? ViewGroup.LayoutParams.MATCH_PARENT : (int) dpToPx(GAP_SIZE);
+        final int height = directionVertical()? (int) dpToPx(GAP_SIZE) : ViewGroup.LayoutParams.MATCH_PARENT;
 
-        view.setLayoutParams(new RecyclerView.LayoutParams(width, height));
-        view.setBackgroundColor(ContextCompat.getColor(mContext, android.R.color.holo_green_light));
+        final ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(width, height);
+
+        if (directionVertical()) {
+            params.width = 0;
+        } else {
+            params.height = 0;
+        }
+
+        view.setLayoutParams(params);
+//        view.setBackgroundColor(ContextCompat.getColor(mContext, android.R.color.holo_green_light));
+
         return view;
     }
 
