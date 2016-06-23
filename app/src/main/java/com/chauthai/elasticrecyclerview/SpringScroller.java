@@ -11,8 +11,8 @@ import com.facebook.rebound.SpringSystem;
 public class SpringScroller extends SimpleSpringListener {
     private static final SpringConfig DEFAULT_CONFIG = new SpringConfig(1000, 200);
 
-    private Spring mSpringX;
-    private Spring mSpringY;
+    private final Spring mSpringX;
+    private final Spring mSpringY;
 
     private SpringScrollerListener mListener;
 

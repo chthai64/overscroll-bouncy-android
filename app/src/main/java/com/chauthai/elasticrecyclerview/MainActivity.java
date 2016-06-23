@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
 
         adapter = new MyAdapter(this, getDataSet(SIZE));
 
-        overScrollHelper = new OverScrollHelper(this, recyclerView);
+        overScrollHelper = new OverScrollHelper.Builder(this, recyclerView).build();
         overScrollHelper.bindAdapter(adapter);
 
     }

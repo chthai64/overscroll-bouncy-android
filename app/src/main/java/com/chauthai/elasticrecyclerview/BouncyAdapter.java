@@ -25,30 +25,29 @@ import java.util.Locale;
  */
 @SuppressWarnings("FieldCanBeLocal")
 public class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.SpringScrollerListener {
-    private static final double DEFAULT_SPEED_FACTOR = 5;
-    private static final int DEFAULT_GAP_LIMIT = 300; // dp
     private static final int GAP_SIZE = 1000; // dp
-
-    private static final int VIEW_COUNT_ESTIMATE_SIZE = 5;
-    private static final int MAX_ADAPTER_SIZE_TO_ESTIMATE = 20;
 
     private static final int VIEW_TYPE_HEADER = 1111;
     private static final int VIEW_TYPE_FOOTER = 2222;
 
-    private int mGapLimitPx;
-    private int mGapLimitDp = DEFAULT_GAP_LIMIT;
-    private double mSpeedFactor = DEFAULT_SPEED_FACTOR;
+    private final int mGapLimitPx;
+    private final int mGapLimitDp;
+    private final double mSpeedFactor;
+    private final int mViewCountToEstimateSize;
+    private final int mMaxAdapterSizeToEstimate;
 
     private Context mContext;
-    private RecyclerView mRecyclerView;
-    private RecyclerView.Adapter mAdapter;
-    private LinearLayoutManager mLayoutManager;
+    private final RecyclerView mRecyclerView;
+    private final RecyclerView.Adapter mAdapter;
+    private final LinearLayoutManager mLayoutManager;
 
     private final View mFooterView;
     private final View mHeaderView;
 
     private final DecelerateSmoothScroller mScroller;
     private final SpringScroller mSpringScroller;
+
+    private final Handler mHandlerUI = new Handler(Looper.getMainLooper());
 
     private long mPrevTime = SystemClock.elapsedRealtime();
     private double mSpeed = 0;
@@ -58,9 +57,17 @@ public class BouncyAdapter extends RecyclerView.Adapter implements SpringScrolle
     private int minDistanceToScrollBack = 1;
     private boolean mShouldUseSpring = false;
 
-    private final Handler mHandlerUI = new Handler(Looper.getMainLooper());
-
-    public BouncyAdapter(Context context, final RecyclerView recyclerView, RecyclerView.Adapter adapter) {
+    private BouncyAdapter(
+            Context context,
+            RecyclerView recyclerView,
+            RecyclerView.Adapter adapter,
+            int gapLimit,
+            double speedFactor,
+            int viewCountToEstimateSize,
+            int maxAdapterSizeToEstimate,
+            int friction,
+            int tension
+    ) {
         if (recyclerView == null)
             throw new RuntimeException("null RecyclerView");
 
@@ -73,14 +80,24 @@ public class BouncyAdapter extends RecyclerView.Adapter implements SpringScrolle
         mContext = context;
         mAdapter = adapter;
         mRecyclerView = recyclerView;
+        mLayoutManager = (LinearLayoutManager) mRecyclerView.getLayoutManager();
+
+        mGapLimitDp = gapLimit;
         mGapLimitPx = (int) dpToPx(mGapLimitDp);
+
+        mSpeedFactor = speedFactor;
+        mViewCountToEstimateSize = viewCountToEstimateSize;
+        mMaxAdapterSizeToEstimate = maxAdapterSizeToEstimate;
 
         mFooterView = createGapView();
         mHeaderView = createGapView();
 
-        mLayoutManager = (LinearLayoutManager) mRecyclerView.getLayoutManager();
         mScroller = new DecelerateSmoothScroller(context);
         mSpringScroller = new SpringScroller(this);
+
+        if (friction > 0 && tension > 0) {
+            mSpringScroller.setConfig(tension, friction);
+        }
 
         initRecyclerView();
     }
@@ -161,12 +178,7 @@ public class BouncyAdapter extends RecyclerView.Adapter implements SpringScrolle
                     diff *= -1;
                 }
 
-                if (diff != 0) {
-                    if (directionVertical())
-                        mRecyclerView.scrollBy(0, diff);
-                    else
-                        mRecyclerView.scrollBy(diff, 0);
-                }
+                scrollBy(diff);
             }
         }
     }
@@ -352,9 +364,9 @@ public class BouncyAdapter extends RecyclerView.Adapter implements SpringScrolle
             mRecyclerView.stopScroll();
 
             if (headerVisible > 0) {
-                mSpringScroller.startScroll(0, headerVisible);
+                startSpringScroll(headerVisible);
             } else {
-                mSpringScroller.startScroll(0, footerVisible);
+                startSpringScroll(footerVisible);
             }
         }
     }
@@ -382,17 +394,34 @@ public class BouncyAdapter extends RecyclerView.Adapter implements SpringScrolle
         mRecyclerView.stopScroll();
         int distToStop = minDistanceToScrollBack;
 
-        if (headerVisible > 0) {
-            mScroller.setScrollVector(new PointF(0, -1));
-            mScroller.setTargetPosition(0);
-        } else {
-            mScroller.setScrollVector(new PointF(0, 1));
-            mScroller.setTargetPosition(getItemCount() - 1);
-        }
+        mScroller.setScrollVector(getDecelVector(headerVisible));
+        mScroller.setTargetPosition(getDecelTargetPos(headerVisible));
 
         mScroller.setDistanceToStop(distToStop);
         mScroller.setInitialSpeed((float) Math.abs(speed));
+
         mLayoutManager.startSmoothScroll(mScroller);
+    }
+
+    private PointF getDecelVector(int headerVisible) {
+        if (headerVisible > 0) {
+            if (directionVertical())
+                return new PointF(0, -1);
+            else
+                return new PointF(-1, 0);
+        }
+
+        if (directionVertical())
+            return new PointF(0, 1);
+
+        return new PointF(1, 0);
+    }
+
+    private int getDecelTargetPos(int headerVisible) {
+        if (headerVisible > 0)
+            return 0;
+
+        return getItemCount() - 1;
     }
 
     private boolean mFirstScrollBy = false;
@@ -429,10 +458,7 @@ public class BouncyAdapter extends RecyclerView.Adapter implements SpringScrolle
                             scrollDist *= -1;
                         }
 
-                        if (directionVertical())
-                            mRecyclerView.scrollBy(0, (int) scrollDist);
-                        else
-                            mRecyclerView.scrollBy((int) scrollDist, 0);
+                        scrollBy((int) scrollDist);
                     }
 
                     // still in onTouchEvent, manually scroll the recycler view.
@@ -482,6 +508,22 @@ public class BouncyAdapter extends RecyclerView.Adapter implements SpringScrolle
                 }
             });
 
+    private void scrollBy(int dist) {
+        if (directionVertical()) {
+            mRecyclerView.scrollBy(0, dist);
+        } else {
+            mRecyclerView.scrollBy(dist, 0);
+        }
+    }
+
+    private void startSpringScroll(int dist) {
+        if (directionVertical()) {
+            mSpringScroller.startScroll(0, dist);
+        } else {
+            mSpringScroller.startScroll(dist, 0);
+        }
+    }
+
     private int contentSizeLessThanView() {
         final int recyclerSize = directionVertical()? mRecyclerView.getHeight() : mRecyclerView.getWidth();
         return Math.max(recyclerSize - estimateContentSize(), 0);
@@ -491,7 +533,7 @@ public class BouncyAdapter extends RecyclerView.Adapter implements SpringScrolle
         int total = 0;
         int count = 0;
 
-        for (int i = mAdapter.getItemCount() - 1; i >= 0 && count < VIEW_COUNT_ESTIMATE_SIZE; i--) {
+        for (int i = mAdapter.getItemCount() - 1; i >= 0 && count < mViewCountToEstimateSize; i--) {
             View view = mLayoutManager.findViewByPosition(i + 1);
 
             if (view != null) {
@@ -503,7 +545,6 @@ public class BouncyAdapter extends RecyclerView.Adapter implements SpringScrolle
                 total += itemHeight;
             }
         }
-
 
         if (count > 0) {
             double average = (double) total / count;
@@ -531,7 +572,7 @@ public class BouncyAdapter extends RecyclerView.Adapter implements SpringScrolle
             result = mRecyclerView.getWidth() - mFooterView.getLeft() - mRecyclerView.getPaddingRight();
         }
 
-        if (mAdapter.getItemCount() <= MAX_ADAPTER_SIZE_TO_ESTIMATE) {
+        if (mAdapter.getItemCount() <= mMaxAdapterSizeToEstimate) {
             result -= contentSizeLessThanView();
         }
 
@@ -561,9 +602,11 @@ public class BouncyAdapter extends RecyclerView.Adapter implements SpringScrolle
     }
 
     private View createGapView() {
-        View view = new View(mContext);
-        view.setLayoutParams(new RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT,
-                (int) dpToPx(GAP_SIZE)));
+        final View view = new View(mContext);
+        final int width = directionVertical()? RecyclerView.LayoutParams.MATCH_PARENT : (int) dpToPx(GAP_SIZE);
+        final int height = directionVertical()? (int) dpToPx(GAP_SIZE) : RecyclerView.LayoutParams.MATCH_PARENT;
+
+        view.setLayoutParams(new RecyclerView.LayoutParams(width, height));
         view.setBackgroundColor(ContextCompat.getColor(mContext, android.R.color.holo_green_light));
         return view;
     }
@@ -606,6 +649,67 @@ public class BouncyAdapter extends RecyclerView.Adapter implements SpringScrolle
                 return "settling";
         }
         return "";
+    }
+
+    protected static class Builder {
+        // required
+        private Context nestedContext;
+        private RecyclerView nestedRecyclerView;
+        private RecyclerView.Adapter nestedAdapter;
+
+        // optional
+        private int nestedGapLimit = 300;
+        private double nestedSpeedFactor = 5;
+        private int nestedTension = -1;
+        private int nestedFriction = -1;
+        private int nestedViewCountEstimateSize = 5;
+        private int nestedMaxAdapterSizeToEstimate = 20;
+
+        public Builder(Context context, RecyclerView recyclerView, RecyclerView.Adapter adapter) {
+            nestedContext = context;
+            nestedRecyclerView = recyclerView;
+            nestedAdapter = adapter;
+        }
+
+        public Builder setGapLimit(int gapLimit) {
+            nestedGapLimit = gapLimit;
+            return this;
+        }
+
+        public Builder setSpeedFactor(double speedFactor) {
+            nestedSpeedFactor = speedFactor;
+            return this;
+        }
+
+        public Builder setSpringConfig(int tension, int friction) {
+            nestedTension = tension;
+            nestedFriction = friction;
+            return this;
+        }
+
+        public Builder setViewCountEstimateSize(int count) {
+            nestedViewCountEstimateSize = count;
+            return this;
+        }
+
+        public Builder setMaxAdapterSizeToEstimate(int size) {
+            nestedMaxAdapterSizeToEstimate = size;
+            return this;
+        }
+
+        public BouncyAdapter build() {
+            return new BouncyAdapter(
+                    nestedContext,
+                    nestedRecyclerView,
+                    nestedAdapter,
+                    nestedGapLimit,
+                    nestedSpeedFactor,
+                    nestedViewCountEstimateSize,
+                    nestedMaxAdapterSizeToEstimate,
+                    nestedFriction,
+                    nestedTension
+            );
+        }
     }
 }
 
