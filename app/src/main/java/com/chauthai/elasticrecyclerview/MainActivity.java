@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-    private static final int SIZE = 20;
+    private static final int SIZE = 18;
 
     private RecyclerView recyclerView;
     private LinearLayoutManager layoutManager;
@@ -40,21 +40,21 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {}
         });
-
     }
 
-
     public void onButtonClick(View v) {
-        recyclerView.scrollToPosition(adapter.getItemCount() - 1);
+//        recyclerView.scrollToPosition(adapter.getItemCount() - 1);
+        recyclerView.fling(0, 2000);
     }
 
     public void onRowClicked(View v) {}
 
     private void setupRecyclerView() {
-        layoutManager = new LinearLayoutManager(this);
+        layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, true);
         recyclerView.setLayoutManager(layoutManager);
 
         adapter = new MyAdapter(this, getDataSet(SIZE));
+        recyclerView.setAdapter(adapter);
 
         overScrollHelper = new OverScrollHelper.Builder(this, recyclerView).build();
         overScrollHelper.bindAdapter(adapter);
