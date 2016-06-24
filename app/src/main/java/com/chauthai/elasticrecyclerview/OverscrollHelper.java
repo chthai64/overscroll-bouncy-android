@@ -1,7 +1,9 @@
 package com.chauthai.elasticrecyclerview;
 
 import android.content.Context;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
+import android.util.AttributeSet;
 
 /**
  * Created by Chau Thai on 6/22/16.
@@ -16,12 +18,12 @@ public class OverScrollHelper {
     private final Context mContext;
     private BouncyAdapter mBouncyAdapter;
 
-    private int mGapLimit = DEFAULT_GAP_LIMIT;
-    private double mSpeedFactor = DEFAULT_SPEED_FACTOR;
-    private int mTension = -1;
-    private int mFriction = -1;
-    private int mViewCountEstimateSize = VIEW_COUNT_ESTIMATE_SIZE;
-    private int mMaxAdapterSizeToEstimate = MAX_ADAPTER_SIZE_TO_ESTIMATE;
+    private final int mGapLimit;
+    private final double mSpeedFactor ;
+    private final int mTension;
+    private final int mFriction;
+    private final int mViewCountEstimateSize;
+    private final int mMaxAdapterSizeToEstimate;
 
     private OverScrollHelper(
             Context context,
@@ -41,7 +43,6 @@ public class OverScrollHelper {
         mMaxAdapterSizeToEstimate = maxAdapterSizeToEstimate;
         mFriction = friction;
         mTension = tension;
-
     }
 
     public void bindAdapter(RecyclerView.Adapter adapter) {

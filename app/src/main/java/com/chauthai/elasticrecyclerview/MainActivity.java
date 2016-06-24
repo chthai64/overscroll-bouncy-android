@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-    private static final int SIZE = 18;
+    private static final int SIZE = 20;
 
     private RecyclerView recyclerView;
     private LinearLayoutManager layoutManager;
@@ -44,13 +44,14 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClick(View v) {
 //        recyclerView.scrollToPosition(adapter.getItemCount() - 1);
-        recyclerView.fling(0, 2000);
+//        recyclerView.fling(0, 2000);
+        recyclerView.smoothScrollToPosition(1);
     }
 
     public void onRowClicked(View v) {}
 
     private void setupRecyclerView() {
-        layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, true);
+        layoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         recyclerView.setLayoutManager(layoutManager);
 
         adapter = new MyAdapter(this, getDataSet(SIZE));
