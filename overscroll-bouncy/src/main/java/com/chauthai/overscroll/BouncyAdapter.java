@@ -188,8 +188,6 @@ class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.Sprin
 
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-//                Log.d("yolo", "footerWholeView: " + footerOccupiesWholeView());
-
                 final int deltaDist = (directionVertical()? dy : dx) * (mLayoutManager.getReverseLayout()? -1 : 1);
 
                 if (footerOccupiesWholeView()) {
@@ -209,6 +207,21 @@ class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.Sprin
                 if (!isDragging && !usingScrollBy) {
                     final int footerVisible = getFooterVisibleLength();
                     final int headerVisible = getHeaderVisibleLength();
+
+                    // If the user flings faster than SpringScroller, update the spring value.
+                    // still doesn't work properly.
+                    if (mShouldUseSpring && mIsScrollBack) {
+                        final int gapVisible = (footerVisible > headerVisible)? footerVisible : headerVisible;
+                        if (gapVisible > 0) {
+                            if (directionVertical()) {
+                                if (gapVisible < mSpringScroller.getCurrY()) {
+                                    mSpringScroller.setCurrY(gapVisible);
+                                }
+                            } else if (gapVisible < mSpringScroller.getCurrX()) {
+                                mSpringScroller.setCurrX(gapVisible);
+                            }
+                        }
+                    }
 
                     final boolean scrolledBackToOtherSide = mIsScrollBack && ((deltaDist > 0 && footerVisible > 0)
                             || (deltaDist < 0 && headerVisible > 0));

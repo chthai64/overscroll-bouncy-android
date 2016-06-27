@@ -33,8 +33,6 @@ public class SpringScroller extends SimpleSpringListener {
             config = new SpringConfig(tension, friction);
         }
 
-        Log.d("yolo", "tension: " + config.tension + ", friction: " + config.friction);
-
         mSpringX = mSpringSystem
                 .createSpring()
                 .setSpringConfig(config);
@@ -47,16 +45,6 @@ public class SpringScroller extends SimpleSpringListener {
         mSpringY.addListener(this);
 
         mListener = listener;
-    }
-
-    public SpringScroller(SpringScrollerListener listener) {
-        this(-1,-1, listener);
-    }
-
-    public void setConfig(double tension, double friction) {
-        final SpringConfig config = new SpringConfig(tension, friction);
-        mSpringX.setSpringConfig(config);
-        mSpringY.setSpringConfig(config);
     }
 
     /**
@@ -88,6 +76,14 @@ public class SpringScroller extends SimpleSpringListener {
 
     public int getCurrY() {
         return (int) Math.round(mSpringY.getCurrentValue());
+    }
+
+    public void setCurrX(int distanceX) {
+        mSpringX.setCurrentValue(distanceX, false);
+    }
+
+    public void setCurrY(int distanceY) {
+        mSpringY.setCurrentValue(distanceY, false);
     }
 
     @Override
