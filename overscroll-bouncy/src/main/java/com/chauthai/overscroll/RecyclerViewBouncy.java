@@ -27,6 +27,10 @@ public class RecyclerViewBouncy extends RecyclerView {
 
     @Override
     public void setAdapter(Adapter adapter) {
+        if (mOriginalAdapter != null) {
+            mOriginalAdapter.unregisterAdapterDataObserver(mAdapterDataObserver);
+        }
+
         mOriginalAdapter = adapter;
         mBouncyAdapter = new BouncyAdapter(getContext(), this, adapter, BouncyConfig.DEFAULT);
 
