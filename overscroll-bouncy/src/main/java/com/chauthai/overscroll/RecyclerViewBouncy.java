@@ -1,10 +1,12 @@
 package com.chauthai.overscroll;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
+import android.util.Log;
 
 /**
  * Created by Chau Thai on 6/27/16.
@@ -12,17 +14,21 @@ import android.util.AttributeSet;
 public class RecyclerViewBouncy extends RecyclerView {
     private BouncyAdapter mBouncyAdapter;
     private Adapter mOriginalAdapter;
+    private BouncyConfig mConfig = BouncyConfig.DEFAULT;
 
     public RecyclerViewBouncy(Context context) {
         super(context);
+        init(context, null);
     }
 
     public RecyclerViewBouncy(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
+        init(context, attrs);
     }
 
     public RecyclerViewBouncy(Context context, @Nullable AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        init(context, attrs);
     }
 
     @Override
@@ -32,7 +38,7 @@ public class RecyclerViewBouncy extends RecyclerView {
         }
 
         mOriginalAdapter = adapter;
-        mBouncyAdapter = new BouncyAdapter(getContext(), this, adapter, BouncyConfig.DEFAULT);
+        mBouncyAdapter = new BouncyAdapter(getContext(), this, adapter, mConfig);
 
         super.setAdapter(mBouncyAdapter);
         adapter.registerAdapterDataObserver(mAdapterDataObserver);
@@ -60,6 +66,46 @@ public class RecyclerViewBouncy extends RecyclerView {
     @Override
     public void smoothScrollToPosition(int position) {
         super.smoothScrollToPosition(position + 1);
+    }
+
+    private void init(Context context, AttributeSet attributeSet) {
+        if (context != null && attributeSet != null) {
+            TypedArray a = context.getTheme().obtainStyledAttributes(
+                    attributeSet,
+                    R.styleable.RecyclerViewBouncy,
+                    0, 0
+            );
+
+            BouncyConfig.Builder builder = new BouncyConfig.Builder();
+
+            if (a.hasValue(R.styleable.RecyclerViewBouncy_tension)) {
+                builder.setTension(a.getInteger(R.styleable.RecyclerViewBouncy_tension, 0));
+            }
+
+            if (a.hasValue(R.styleable.RecyclerViewBouncy_friction)) {
+                builder.setFriction(a.getInteger(R.styleable.RecyclerViewBouncy_friction, 0));
+            }
+
+            if (a.hasValue(R.styleable.RecyclerViewBouncy_gapLimit)) {
+                builder.setGapLimit(a.getInteger(R.styleable.RecyclerViewBouncy_gapLimit, 0));
+            }
+
+            if (a.hasValue(R.styleable.RecyclerViewBouncy_speedFactor)) {
+                builder.setSpeedFactor(a.getInteger(R.styleable.RecyclerViewBouncy_speedFactor, 0));
+            }
+
+            if (a.hasValue(R.styleable.RecyclerViewBouncy_viewCountEstimateSize)) {
+                builder.setViewCountEstimateSize(a.getInteger(
+                        R.styleable.RecyclerViewBouncy_viewCountEstimateSize, 0));
+            }
+
+            if (a.hasValue(R.styleable.RecyclerViewBouncy_maxAdapterSizeToEstimate)) {
+                builder.setMaxAdapterSizeToEstimate(a.getInteger(
+                        R.styleable.RecyclerViewBouncy_maxAdapterSizeToEstimate, 0));
+            }
+
+            mConfig = builder.build();
+        }
     }
 
     private final AdapterDataObserver mAdapterDataObserver = new AdapterDataObserver() {

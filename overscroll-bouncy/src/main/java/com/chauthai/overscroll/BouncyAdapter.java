@@ -76,7 +76,7 @@ class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.Sprin
         mHeaderView = createGapView();
 
         mScroller = new DecelerateSmoothScroller(context);
-        mSpringScroller = new SpringScroller(this);
+        mSpringScroller = new SpringScroller(config.tension, config.friction, this);
 
         initRecyclerView();
     }

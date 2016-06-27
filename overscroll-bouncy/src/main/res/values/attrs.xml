@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="RecyclerViewBouncy">
+        <attr name="tension" format="integer" />
+        <attr name="friction" format="integer" />
+        <attr name="speedFactor" format="integer" />
+        <attr name="gapLimit" format="integer" />
+        <attr name="viewCountEstimateSize" format="integer" />
+        <attr name="maxAdapterSizeToEstimate" format="integer" />
+    </declare-styleable>
+
+
+</resources>

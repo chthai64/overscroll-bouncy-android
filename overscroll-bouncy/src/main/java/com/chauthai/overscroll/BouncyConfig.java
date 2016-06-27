@@ -61,6 +61,18 @@ public class BouncyConfig {
         return maxAdapterSizeToEstimate;
     }
 
+    @Override
+    public String toString() {
+        return "BouncyConfig{" +
+                "gapLimit=" + gapLimit +
+                ", speedFactor=" + speedFactor +
+                ", tension=" + tension +
+                ", friction=" + friction +
+                ", viewCountEstimateSize=" + viewCountEstimateSize +
+                ", maxAdapterSizeToEstimate=" + maxAdapterSizeToEstimate +
+                '}';
+    }
+
     public static class Builder {
         private int nestedGapLimit = DEF_GAP_LIMIT;
         private double nestedSpeedFactor = DEF_SPEED_FACTOR;
@@ -79,8 +91,12 @@ public class BouncyConfig {
             return this;
         }
 
-        public Builder setSpringConfig(int tension, int friction) {
+        public Builder setTension(int tension) {
             nestedTension = tension;
+            return this;
+        }
+
+        public Builder setFriction(int friction) {
             nestedFriction = friction;
             return this;
         }

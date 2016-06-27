@@ -1,5 +1,7 @@
 package com.chauthai.overscroll;
 
+import android.util.Log;
+
 import com.facebook.rebound.SimpleSpringListener;
 import com.facebook.rebound.Spring;
 import com.facebook.rebound.SpringConfig;
@@ -30,6 +32,8 @@ public class SpringScroller extends SimpleSpringListener {
         } else {
             config = new SpringConfig(tension, friction);
         }
+
+        Log.d("yolo", "tension: " + config.tension + ", friction: " + config.friction);
 
         mSpringX = mSpringSystem
                 .createSpring()

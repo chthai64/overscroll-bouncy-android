@@ -23,7 +23,7 @@ public class MyAdapter extends RecyclerView.Adapter {
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View v = mInflater.inflate(com.chauthai.overscroll.R.layout.row, parent, false);
+        View v = mInflater.inflate(R.layout.row, parent, false);
         return new Holder(v);
     }
 
