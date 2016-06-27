@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/ElasticRecyclerView.iml" filepath="$PROJECT_DIR$/ElasticRecyclerView.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/overscroll-bouncy/overscroll-bouncy.iml" filepath="$PROJECT_DIR$/overscroll-bouncy/overscroll-bouncy.iml" />
+      <module fileurl="file://$PROJECT_DIR$/overscroll-bouncy-android.iml" filepath="$PROJECT_DIR$/overscroll-bouncy-android.iml" />
     </modules>
   </component>
 </project>
