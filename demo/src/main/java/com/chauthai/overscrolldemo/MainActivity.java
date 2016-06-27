@@ -1,7 +1,7 @@
-package com.chauthai.overscroll;
+package com.chauthai.overscrolldemo;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
@@ -16,7 +16,6 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private LinearLayoutManager layoutManager;
     private MyAdapter adapter;
-    private OverScrollHelper overScrollHelper;
 
     private SeekBar seekBar;
 
@@ -58,10 +57,6 @@ public class MainActivity extends AppCompatActivity {
 
         adapter = new MyAdapter(this, getDataSet(SIZE));
         recyclerView.setAdapter(adapter);
-
-//        overScrollHelper = new OverScrollHelper.Builder(this, recyclerView).build();
-//        overScrollHelper.bindAdapter(adapter);
-
     }
 
     private List<String> getDataSet(int n) {

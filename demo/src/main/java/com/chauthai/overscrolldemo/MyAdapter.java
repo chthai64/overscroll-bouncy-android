@@ -1,4 +1,4 @@
-package com.chauthai.overscroll;
+package com.chauthai.overscrolldemo;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
@@ -23,7 +23,7 @@ public class MyAdapter extends RecyclerView.Adapter {
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View v = mInflater.inflate(R.layout.row, parent, false);
+        View v = mInflater.inflate(com.chauthai.overscroll.R.layout.row, parent, false);
         return new Holder(v);
     }
 
@@ -47,7 +47,7 @@ public class MyAdapter extends RecyclerView.Adapter {
 
         public Holder(View view) {
             super(view);
-            textView = (TextView) view.findViewById(R.id.text);
+            textView = (TextView) view.findViewById(com.chauthai.overscroll.R.id.text);
         }
     }
 }

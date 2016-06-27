@@ -1,1 +1,1 @@
-include ':overscroll-bouncy'
+include ':overscroll-bouncy', ':demo'

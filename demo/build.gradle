@@ -1,10 +1,11 @@
-apply plugin: 'com.android.library'
+apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 24
     buildToolsVersion "24.0.0"
 
     defaultConfig {
+        applicationId "com.chauthai.overscrolldemo"
         minSdkVersion 14
         targetSdkVersion 24
         versionCode 1
@@ -19,8 +20,8 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:24.0.0'
-    compile 'com.android.support:recyclerview-v7:24.0.0'
-    compile 'com.facebook.rebound:rebound:0.3.8'
+    compile project(':overscroll-bouncy')
 }
