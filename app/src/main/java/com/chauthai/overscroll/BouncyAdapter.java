@@ -29,11 +29,8 @@ class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.Sprin
     private static final int VIEW_TYPE_HEADER = 1111;
     private static final int VIEW_TYPE_FOOTER = 2222;
 
+    private final BouncyConfig mConfig;
     private final int mGapLimitPx;
-    private final int mGapLimitDp;
-    private final double mSpeedFactor;
-    private final int mViewCountToEstimateSize;
-    private final int mMaxAdapterSizeToEstimate;
 
     private Context mContext;
     private final RecyclerView mRecyclerView;
@@ -56,17 +53,8 @@ class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.Sprin
     private int minDistanceToScrollBack = 1;
     private boolean mShouldUseSpring = false;
 
-    private BouncyAdapter(
-            Context context,
-            RecyclerView recyclerView,
-            RecyclerView.Adapter adapter,
-            int gapLimit,
-            double speedFactor,
-            int viewCountToEstimateSize,
-            int maxAdapterSizeToEstimate,
-            int friction,
-            int tension
-    ) {
+    public BouncyAdapter(Context context, RecyclerView recyclerView,
+                          RecyclerView.Adapter adapter,  BouncyConfig config) {
         if (recyclerView == null)
             throw new RuntimeException("null RecyclerView");
 
@@ -81,22 +69,14 @@ class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.Sprin
         mRecyclerView = recyclerView;
         mLayoutManager = (LinearLayoutManager) mRecyclerView.getLayoutManager();
 
-        mGapLimitDp = gapLimit;
-        mGapLimitPx = (int) dpToPx(mGapLimitDp);
-
-        mSpeedFactor = speedFactor;
-        mViewCountToEstimateSize = viewCountToEstimateSize;
-        mMaxAdapterSizeToEstimate = maxAdapterSizeToEstimate;
+        mConfig = config;
+        mGapLimitPx = (int) dpToPx(mConfig.gapLimit);
 
         mFooterView = createGapView();
         mHeaderView = createGapView();
 
         mScroller = new DecelerateSmoothScroller(context);
         mSpringScroller = new SpringScroller(this);
-
-        if (friction > 0 && tension > 0) {
-            mSpringScroller.setConfig(tension, friction);
-        }
 
         initRecyclerView();
     }
@@ -400,13 +380,13 @@ class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.Sprin
             if (speed >= 0)
                 return 0;
 
-            return (int) Math.min((mGapLimitPx / mSpeedFactor * pxToDp(-speed)), mGapLimitPx);
+            return (int) Math.min((mGapLimitPx / mConfig.speedFactor * pxToDp(-speed)), mGapLimitPx);
         }
 
         if (footerVisible == 0 || speed <= 0)
             return 0;
 
-        return (int) Math.min((mGapLimitPx / mSpeedFactor * pxToDp(speed)), mGapLimitPx);
+        return (int) Math.min((mGapLimitPx / mConfig.speedFactor * pxToDp(speed)), mGapLimitPx);
     }
 
     private void reduceScrollSpeed(double speed, int headerVisible) {
@@ -556,7 +536,7 @@ class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.Sprin
         int total = 0;
         int count = 0;
 
-        for (int i = mAdapter.getItemCount() - 1; i >= 0 && count < mViewCountToEstimateSize; i--) {
+        for (int i = mAdapter.getItemCount() - 1; i >= 0 && count < mConfig.viewCountEstimateSize; i--) {
             View view = mLayoutManager.findViewByPosition(i + 1);
 
             if (view != null) {
@@ -603,7 +583,7 @@ class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.Sprin
             }
         }
 
-        if (mAdapter.getItemCount() <= mMaxAdapterSizeToEstimate) {
+        if (mAdapter.getItemCount() <= mConfig.maxAdapterSizeToEstimate) {
             result -= contentSizeLessThanView();
         }
 
@@ -745,67 +725,6 @@ class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.Sprin
                 return "settling";
         }
         return "";
-    }
-
-    protected static class Builder {
-        // required
-        private Context nestedContext;
-        private RecyclerView nestedRecyclerView;
-        private RecyclerView.Adapter nestedAdapter;
-
-        // optional
-        private int nestedGapLimit = 300;
-        private double nestedSpeedFactor = 5;
-        private int nestedTension = -1;
-        private int nestedFriction = -1;
-        private int nestedViewCountEstimateSize = 5;
-        private int nestedMaxAdapterSizeToEstimate = 20;
-
-        public Builder(Context context, RecyclerView recyclerView, RecyclerView.Adapter adapter) {
-            nestedContext = context;
-            nestedRecyclerView = recyclerView;
-            nestedAdapter = adapter;
-        }
-
-        public Builder setGapLimit(int gapLimit) {
-            nestedGapLimit = gapLimit;
-            return this;
-        }
-
-        public Builder setSpeedFactor(double speedFactor) {
-            nestedSpeedFactor = speedFactor;
-            return this;
-        }
-
-        public Builder setSpringConfig(int tension, int friction) {
-            nestedTension = tension;
-            nestedFriction = friction;
-            return this;
-        }
-
-        public Builder setViewCountEstimateSize(int count) {
-            nestedViewCountEstimateSize = count;
-            return this;
-        }
-
-        public Builder setMaxAdapterSizeToEstimate(int size) {
-            nestedMaxAdapterSizeToEstimate = size;
-            return this;
-        }
-
-        public BouncyAdapter build() {
-            return new BouncyAdapter(
-                    nestedContext,
-                    nestedRecyclerView,
-                    nestedAdapter,
-                    nestedGapLimit,
-                    nestedSpeedFactor,
-                    nestedViewCountEstimateSize,
-                    nestedMaxAdapterSizeToEstimate,
-                    nestedFriction,
-                    nestedTension
-            );
-        }
     }
 }
 

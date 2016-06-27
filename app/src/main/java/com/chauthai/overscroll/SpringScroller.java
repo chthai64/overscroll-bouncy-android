@@ -21,21 +21,32 @@ public class SpringScroller extends SimpleSpringListener {
         void onAtRest();
     }
 
-    public SpringScroller(SpringScrollerListener listener) {
+    public SpringScroller(double tension, double friction, SpringScrollerListener listener) {
         final SpringSystem mSpringSystem = SpringSystem.create();
+
+        SpringConfig config;
+        if (tension < 0 || friction < 0) {
+            config = DEFAULT_CONFIG;
+        } else {
+            config = new SpringConfig(tension, friction);
+        }
 
         mSpringX = mSpringSystem
                 .createSpring()
-                .setSpringConfig(DEFAULT_CONFIG);
+                .setSpringConfig(config);
 
         mSpringY = mSpringSystem
                 .createSpring()
-                .setSpringConfig(DEFAULT_CONFIG);
+                .setSpringConfig(config);
 
         mSpringX.addListener(this);
         mSpringY.addListener(this);
 
         mListener = listener;
+    }
+
+    public SpringScroller(SpringScrollerListener listener) {
+        this(-1,-1, listener);
     }
 
     public void setConfig(double tension, double friction) {

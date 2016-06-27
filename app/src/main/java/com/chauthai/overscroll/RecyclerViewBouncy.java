@@ -10,21 +10,8 @@ import android.util.AttributeSet;
  * Created by Chau Thai on 6/27/16.
  */
 public class RecyclerViewBouncy extends RecyclerView {
-    private static final double DEF_SPEED_FACTOR = 5;
-    private static final int DEF_GAP_LIMIT = 300; // dp
-    private static final int DEF_VIEW_COUNT_ESTIMATE_SIZE = 5;
-    private static final int DEF_MAX_ADAPTER_SIZE_TO_ESTIMATE = 20;
-
     private BouncyAdapter mBouncyAdapter;
     private Adapter mOriginalAdapter;
-
-    private int mGapLimit = DEF_GAP_LIMIT;
-    private double mSpeedFactor = DEF_SPEED_FACTOR;
-    private int mTension = -1;
-    private int mFriction = -1;
-    private int mViewCountEstimateSize = DEF_VIEW_COUNT_ESTIMATE_SIZE;
-    private int mMaxAdapterSizeToEstimate = DEF_MAX_ADAPTER_SIZE_TO_ESTIMATE;
-
 
     public RecyclerViewBouncy(Context context) {
         super(context);
@@ -41,13 +28,7 @@ public class RecyclerViewBouncy extends RecyclerView {
     @Override
     public void setAdapter(Adapter adapter) {
         mOriginalAdapter = adapter;
-        mBouncyAdapter = new BouncyAdapter.Builder(getContext(), this, adapter)
-                .setGapLimit(mGapLimit)
-                .setSpeedFactor(mSpeedFactor)
-                .setSpringConfig(mTension, mFriction)
-                .setViewCountEstimateSize(mViewCountEstimateSize)
-                .setMaxAdapterSizeToEstimate(mMaxAdapterSizeToEstimate)
-                .build();
+        mBouncyAdapter = new BouncyAdapter(getContext(), this, adapter, BouncyConfig.DEFAULT);
 
         super.setAdapter(mBouncyAdapter);
         adapter.registerAdapterDataObserver(mAdapterDataObserver);
