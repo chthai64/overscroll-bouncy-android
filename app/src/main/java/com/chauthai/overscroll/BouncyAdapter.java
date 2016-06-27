@@ -1,4 +1,4 @@
-package com.chauthai.elasticrecyclerview;
+package com.chauthai.overscroll;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -7,7 +7,6 @@ import android.graphics.Rect;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -24,7 +23,7 @@ import java.util.Locale;
  * Created by Chau Thai on 5/17/16.
  */
 @SuppressWarnings("FieldCanBeLocal")
-public class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.SpringScrollerListener {
+class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.SpringScrollerListener {
     private static final int GAP_SIZE = 1000; // dp
 
     private static final int VIEW_TYPE_HEADER = 1111;
@@ -198,7 +197,7 @@ public class BouncyAdapter extends RecyclerView.Adapter implements SpringScrolle
     }
 
     private void initRecyclerView() {
-        mRecyclerView.scrollToPosition(1);
+        scrollToPosition(0);
         initOnScrollListener();
         initTouchListener();
     }
@@ -679,6 +678,14 @@ public class BouncyAdapter extends RecyclerView.Adapter implements SpringScrolle
 
     private boolean directionVertical() {
         return mLayoutManager.getOrientation() == LinearLayoutManager.VERTICAL;
+    }
+
+    private void scrollToPosition(int position) {
+        if (mRecyclerView instanceof RecyclerViewBouncy) {
+            mRecyclerView.scrollToPosition(position);
+        } else {
+            mRecyclerView.scrollToPosition(position + 1);
+        }
     }
 
     private View createGapView() {

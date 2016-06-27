@@ -1,4 +1,4 @@
-package com.chauthai.elasticrecyclerview;
+package com.chauthai.overscroll;
 
 import com.facebook.rebound.SimpleSpringListener;
 import com.facebook.rebound.Spring;

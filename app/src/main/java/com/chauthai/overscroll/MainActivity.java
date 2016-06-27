@@ -1,4 +1,4 @@
-package com.chauthai.elasticrecyclerview;
+package com.chauthai.overscroll;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -45,20 +45,22 @@ public class MainActivity extends AppCompatActivity {
     public void onButtonClick(View v) {
 //        recyclerView.scrollToPosition(adapter.getItemCount() - 1);
 //        recyclerView.fling(0, 2000);
-        recyclerView.smoothScrollToPosition(1);
+
+            adapter.notifyItemRemoved(3);
     }
+
 
     public void onRowClicked(View v) {}
 
     private void setupRecyclerView() {
-        layoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+        layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(layoutManager);
 
         adapter = new MyAdapter(this, getDataSet(SIZE));
         recyclerView.setAdapter(adapter);
 
-        overScrollHelper = new OverScrollHelper.Builder(this, recyclerView).build();
-        overScrollHelper.bindAdapter(adapter);
+//        overScrollHelper = new OverScrollHelper.Builder(this, recyclerView).build();
+//        overScrollHelper.bindAdapter(adapter);
 
     }
 
