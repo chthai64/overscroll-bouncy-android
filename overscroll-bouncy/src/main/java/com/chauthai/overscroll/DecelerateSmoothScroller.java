@@ -90,6 +90,10 @@ public class DecelerateSmoothScroller extends LinearSmoothScroller {
         mInitialSpeed = speed;
     }
 
+    /**
+     * Set the distance where it should stop.
+     * @param distance in pixels.
+     */
     public void setDistanceToStop(int distance) {
         mDistanceToStop = distance;
     }

@@ -41,8 +41,8 @@ public class SpringScroller extends SimpleSpringListener {
     private SpringScrollerListener mListener;
 
     public interface SpringScrollerListener {
-        void onUpdate(int currX, int currY);
-        void onAtRest();
+        void onSpringUpdate(int currX, int currY);
+        void onSpringAtRest();
     }
 
     public SpringScroller(double tension, double friction, SpringScrollerListener listener) {
@@ -113,14 +113,14 @@ public class SpringScroller extends SimpleSpringListener {
     @Override
     public void onSpringUpdate(Spring spring) {
         if (mListener != null) {
-            mListener.onUpdate(getCurrX(), getCurrY());
+            mListener.onSpringUpdate(getCurrX(), getCurrY());
         }
     }
 
     @Override
     public void onSpringAtRest(Spring spring) {
         if (mListener != null && isAtRest()) {
-            mListener.onAtRest();
+            mListener.onSpringAtRest();
         }
     }
 }
