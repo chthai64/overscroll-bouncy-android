@@ -6,7 +6,7 @@ package com.chauthai.overscroll;
  */
 public class BouncyConfig {
     private static final double DEF_SPEED_FACTOR = 5;
-    private static final int DEF_GAP_LIMIT = 300; // dp
+    private static final int DEF_GAP_LIMIT = 220; // dp
     private static final int DEF_VIEW_COUNT_ESTIMATE_SIZE = 5;
     private static final int DEF_MAX_ADAPTER_SIZE_TO_ESTIMATE = 20;
     private static final int DEF_TENSION = 1000;
@@ -87,6 +87,8 @@ public class BouncyConfig {
         }
 
         public Builder setSpeedFactor(double speedFactor) {
+            if (speedFactor < 1)
+                speedFactor = 1;
             nestedSpeedFactor = speedFactor;
             return this;
         }

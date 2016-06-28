@@ -80,10 +80,12 @@ public class SpringScroller extends SimpleSpringListener {
 
     public void setCurrX(int distanceX) {
         mSpringX.setCurrentValue(distanceX, false);
+        mSpringX.setEndValue(0);
     }
 
     public void setCurrY(int distanceY) {
         mSpringY.setCurrentValue(distanceY, false);
+        mSpringY.setEndValue(0);
     }
 
     @Override

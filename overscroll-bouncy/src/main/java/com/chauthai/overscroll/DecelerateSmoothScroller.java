@@ -11,8 +11,6 @@ import android.view.animation.DecelerateInterpolator;
  * Created by Chau Thai on 6/3/16.
  */
 public class DecelerateSmoothScroller extends LinearSmoothScroller {
-    private static final String TAG = "yolo";
-
     private static final float DECELERATE_FACTOR = 2.0f;
     private float mInitialSpeed = 1; // px per ms
     private int mDistanceToStop = 100;
@@ -31,13 +29,11 @@ public class DecelerateSmoothScroller extends LinearSmoothScroller {
     @Override
     protected void onStart() {
         super.onStart();
-//        Log.d(TAG, "onStart");
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-//        Log.d(TAG, "onStop");
     }
 
     @Override
@@ -47,9 +43,6 @@ public class DecelerateSmoothScroller extends LinearSmoothScroller {
         final int distance = (int) Math.sqrt(dx * dx + dy * dy);
         final int time = calculateTimeForDeceleration(distance);
 
-//        Log.d(TAG, "dy: " + dy + ", snapPref: " + getHorizontalSnapPreference());
-//        Log.d(TAG, "onTargetFound, distance: " + distance + ", time: " + time);
-
         if (time > 0) {
             action.update(-dx, -dy, time, new DecelerateInterpolator(DECELERATE_FACTOR));
         }
@@ -57,15 +50,8 @@ public class DecelerateSmoothScroller extends LinearSmoothScroller {
 
     @Override
     protected int calculateTimeForScrolling(int dx) {
-        int time = (int) Math.ceil(Math.abs(dx) / mInitialSpeed);
-//        Log.d("yolo", "calculate time dx: " + dx + ", speed: " + mScrollSpeed + ", time: " + time);
-        return time;
+        return (int) Math.ceil(Math.abs(dx) / mInitialSpeed);
     }
-
-//    @Override
-//    protected int calculateTimeForDeceleration(int dx) {
-//        return  (int) Math.ceil(calculateTimeForScrolling(dx) / 0.3356);
-//    }
 
     @Override
     public PointF computeScrollVectorForPosition(int targetPosition) {
