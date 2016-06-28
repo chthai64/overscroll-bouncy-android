@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="70dp"
-
-    android:layout_marginLeft="10dp"
-    android:layout_marginRight="10dp"
-    android:layout_marginBottom="5dp"
+    android:layout_height="80dp"
+    android:background="@drawable/rect_shadow_rounded"
     android:layout_marginTop="5dp"
-
-    android:background="@android:color/holo_blue_light"
+    android:layout_marginBottom="5dp"
+    android:layout_marginStart="10dp"
+    android:layout_marginEnd="10dp"
     android:clickable="true"
     android:onClick="onRowClicked">
 
@@ -21,5 +19,4 @@
         android:layout_gravity="center"
         android:textColor="@android:color/white"
         android:singleLine="true"/>
-
 </FrameLayout>

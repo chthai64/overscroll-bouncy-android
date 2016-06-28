@@ -5,19 +5,17 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
-import android.widget.SeekBar;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-    private static final int SIZE = 20;
+    private static final int SIZE = 15;
 
     private RecyclerView recyclerView;
     private LinearLayoutManager layoutManager;
     private MyAdapter adapter;
 
-    private SeekBar seekBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,29 +23,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         setupRecyclerView();
-
-
-        seekBar = (SeekBar) findViewById(R.id.seekbar);
-        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
-        });
     }
-
-    public void onButtonClick(View v) {
-//        recyclerView.scrollToPosition(adapter.getItemCount() - 1);
-//        recyclerView.fling(0, 2000);
-
-            adapter.notifyItemRemoved(3);
-    }
-
 
     public void onRowClicked(View v) {}
 
@@ -63,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
         List<String> data = new ArrayList<>();
 
         for (int i = 0; i < n; i++) {
-            data.add("data " + i);
+            data.add("row " + (i + 1));
         }
 
         return data;
