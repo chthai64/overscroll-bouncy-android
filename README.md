@@ -6,14 +6,13 @@ An Android library which simulates iOS-like overscroll animation. It use springs
 
 ### Basic Usage
 
-#### Dependencies
+##### Dependencies
 ```groovy
 dependencies {
     // coming soon
 }
 ```
 
-#### Layout file
 ##### RecyclerView
 ```xml
 <com.chauthai.overscroll.RecyclerViewBouncy
@@ -41,4 +40,5 @@ coming soon.
     app:maxAdapterSizeToEstimate="20"/>
 ```
 
-* ```tension``` Tension of the spring. It should be set to a high value (ex. 1000) for smooth animation.
+* ```tension``` Tension of the spring. It should be set to a high value (ex. 1000) for smooth animation. 
+* ```friction```
