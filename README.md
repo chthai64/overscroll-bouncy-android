@@ -1,10 +1,10 @@
 # OverscrollBouncy
 An Android library which simulates iOS-like overscroll animation. It uses spring mechanism for animating the scrollback. It currently supports RecyclerView with LinearLayoutManager. I'm working on ListView and ScrollView.
 
-### Demo
+## Demo
 ![Demo](https://github.com/chthai64/overscroll-bouncy-android/raw/master/arts/OverscrollDemo.gif)
 
-### Basic Usage
+## Basic Usage
 
 ##### Dependencies
 ```groovy
@@ -24,7 +24,7 @@ dependencies {
 ##### ListView, ScrollView
 coming soon.
 
-### Advanced Usage
+## Advanced Usage
 ```xml
 <com.chauthai.overscroll.RecyclerViewBouncy
     android:id="@+id/recyclerView"
@@ -48,10 +48,10 @@ coming soon.
 * ```viewCountEstimateSize``` (for RecyclerView/Listview) The number of children views to estimate the content size of RecyclerView (or ListView). The estimation is computed by averaging the children views size then multiply by the total items inside the adapter.
 * ```maxAdapterSizeToEstimate``` (for RecyclerView/Listview) The maximum adapter size (number of items in the adapter) that the system will include content size estimation of the RecyclerView (or ListView) in the calculation.
  
-### Credits
+## Credits
 [Rebound](http://facebook.github.io/rebound/) library.
 
-### License
+## License
 ```
  The MIT License (MIT)
 
