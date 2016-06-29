@@ -30,7 +30,7 @@ import com.facebook.rebound.SpringConfig;
 import com.facebook.rebound.SpringSystem;
 
 /**
- * Created by Chau Thai on 6/8/16.
+ * A class which simulate a spring system with parameterizable tension and friction.
  */
 public class SpringScroller extends SimpleSpringListener {
     private static final SpringConfig DEFAULT_CONFIG = new SpringConfig(1000, 200);

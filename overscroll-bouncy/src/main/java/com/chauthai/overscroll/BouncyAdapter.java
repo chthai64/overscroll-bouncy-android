@@ -35,7 +35,6 @@ import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -44,10 +43,14 @@ import android.view.ViewGroup;
 import java.util.Locale;
 
 /**
- * Created by Chau Thai on 5/17/16.
+ * An adapter class which wraps the original {@link android.support.v7.widget.RecyclerView.Adapter}
+ * adapter to create the over-scroll bouncy effect.
  */
-@SuppressWarnings("FieldCanBeLocal")
 class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.SpringScrollerListener {
+    /**
+     * The actual gap size (in dp). Not all portion of the gap will be visible.
+     * The maximum visible size is defined in {@link BouncyConfig#gapLimit}
+     */
     private static final int GAP_SIZE = 1000; // dp
 
     private static final int VIEW_TYPE_HEADER = 1111;
@@ -70,17 +73,47 @@ class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.Sprin
     private final Handler mHandlerUI = new Handler(Looper.getMainLooper());
 
     private long mPrevTime = SystemClock.elapsedRealtime();
-    private double mSpeed = 0;
+    private double mScrollSpeed = 0;
     private int mPrevFooterVisible = 0;
 
+    /**
+     * True if the RecyclerView is scrolling back after over-scrolled.
+     */
     private boolean mIsScrollBack = false;
+
+    /**
+     * The minimum over-scrolled distance that will trigger the scroll back.
+     */
     private int minDistanceToScrollBack = 1;
+
+    /**
+     * True if the SpringScroller will affect the RecyclerView.
+     */
     private boolean mShouldUseSpring = false;
 
+    /**
+     * True if {@link #scrollBy(int)} is used for the first time when the user
+     * uses finger to over scroll the list.
+     */
     private boolean mFirstScrollBy = false;
+
+    /**
+     * True if {@link GestureDetectorCompat#onTouchEvent(MotionEvent)} is called
+     * in onInterceptTouchEvent().
+     */
     private boolean mGestureOnIntercept = true;
+
+    /**
+     * True if the RecyclerView is over-scrolled and the user flings back
+     * (the opposite direction).
+     */
     private boolean mFlingOverScrollBack = false;  // fling back while over scrolled.
 
+    /**
+     * True if the spring is updated the first time after {@link #startSpringScroll(int)}.
+     * It is used to discard the first spring value. Sometimes the first spring value is
+     * not correct.
+     */
     private boolean isSpringFirstValue = true;
 
     public BouncyAdapter(Context context, RecyclerView recyclerView,
@@ -237,7 +270,7 @@ class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.Sprin
                         gapAlreadyVisible = true;
                         mIsScrollBack = false;
                         mSpringScroller.stopScroll();
-                        minDistanceToScrollBack = getMinDistanceToScrollBack(mSpeed, headerVisible, footerVisible);
+                        minDistanceToScrollBack = getMinDistanceToScrollBack(mScrollSpeed, headerVisible, footerVisible);
                     }
 
                     if (footerVisible == 0 && headerVisible == 0) {
@@ -250,14 +283,14 @@ class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.Sprin
                     } else if (!mIsScrollBack) {
                         if (!gapAlreadyVisible) {
                             // check if it's already exceeded the distance to scroll back
-                            minDistanceToScrollBack = getMinDistanceToScrollBack(mSpeed, headerVisible, footerVisible);
+                            minDistanceToScrollBack = getMinDistanceToScrollBack(mScrollSpeed, headerVisible, footerVisible);
                             gapAlreadyVisible = true;
 
                             // scroll back
                             if (headerVisible >= minDistanceToScrollBack || footerVisible >= minDistanceToScrollBack) {
                                 scrollBack(headerVisible, footerVisible);
                             } else {
-                                reduceScrollSpeed(mSpeed, headerVisible);
+                                reduceScrollSpeed(mScrollSpeed, headerVisible);
                             }
                         } else if (headerVisible >= minDistanceToScrollBack || footerVisible >= minDistanceToScrollBack) {
                             scrollBack(headerVisible, footerVisible);
@@ -322,12 +355,12 @@ class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.Sprin
         final boolean overScrolled = (footerVisible > 0 || headerVisible > 0);
 
         if (overScrolled) {
-            minDistanceToScrollBack = getMinDistanceToScrollBack(mSpeed, headerVisible, footerVisible);
+            minDistanceToScrollBack = getMinDistanceToScrollBack(mScrollSpeed, headerVisible, footerVisible);
             boolean reduceHeaderSpeed = (headerVisible > 0) && (headerVisible < minDistanceToScrollBack);
             boolean reduceFooterSpeed = (footerVisible > 0) && (footerVisible < minDistanceToScrollBack);
 
             if (reduceHeaderSpeed || reduceFooterSpeed) {
-                reduceScrollSpeed(mSpeed, headerVisible);
+                reduceScrollSpeed(mScrollSpeed, headerVisible);
             } else {
                 scrollBack(headerVisible, footerVisible);
             }
@@ -336,6 +369,11 @@ class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.Sprin
         mShouldUseSpring = true;
     }
 
+    /**
+     * Intercepting touch event will cause the RecyclerView stop receiving scrolling event.
+     * We will need to handle scrolling by using {@link #scrollBy(int)} manually.
+     * @return true if it should intercept touch.
+     */
     private boolean shouldInterceptTouch() {
         final int headerVisible = getHeaderVisibleLength();
         final int footerVisible = getFooterVisibleLength();
@@ -366,7 +404,7 @@ class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.Sprin
             }
         }
 
-        mSpeed = (double) deltaDist / (currTime - mPrevTime);
+        mScrollSpeed = (double) deltaDist / (currTime - mPrevTime);
         mPrevTime = currTime;
     }
 

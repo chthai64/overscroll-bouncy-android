@@ -33,7 +33,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 
 /**
- * Created by Chau Thai on 6/27/16.
+ * A RecyclerView which supports iOS-like over-scroll style.
  */
 public class RecyclerViewBouncy extends RecyclerView {
     private BouncyAdapter mBouncyAdapter;
@@ -61,6 +61,7 @@ public class RecyclerViewBouncy extends RecyclerView {
             mOriginalAdapter.unregisterAdapterDataObserver(mAdapterDataObserver);
         }
 
+        // wrap the original adapter inside the BouncyAdapter
         mOriginalAdapter = adapter;
         mBouncyAdapter = new BouncyAdapter(getContext(), this, adapter, mConfig);
 
@@ -73,6 +74,9 @@ public class RecyclerViewBouncy extends RecyclerView {
         setAdapter(adapter);
     }
 
+    /**
+     * @param layout only supports {@link LinearLayoutManager}
+     */
     @Override
     public void setLayoutManager(LayoutManager layout) {
         if (!(layout instanceof LinearLayoutManager)) {

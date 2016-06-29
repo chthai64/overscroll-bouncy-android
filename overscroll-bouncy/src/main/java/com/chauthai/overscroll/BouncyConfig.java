@@ -24,9 +24,8 @@
 
 package com.chauthai.overscroll;
 
-
 /**
- * Created by Chau Thai on 6/27/16.
+ * Configuration for the over-scroll behaviour.
  */
 public class BouncyConfig {
     private static final double DEF_SPEED_FACTOR = 5;
@@ -36,11 +35,40 @@ public class BouncyConfig {
     private static final int DEF_TENSION = 1000;
     private static final int DEF_FRICTION = 200;
 
+    /**
+     * The maximum over-scroll gap size (in dp).
+     */
     protected final int gapLimit;
+
+    /**
+     * The higher the speedFactor is, the less the view will utilize
+     * the gap limit. Minimum value is 1.
+     */
     protected final double speedFactor;
+
+    /**
+     * Tension of the spring. It should be set to a high value (ex. 1000)
+     * for smooth animation.
+     */
     protected final int tension;
+
+    /**
+     * Friction of the spring. High friction value will slow down the
+     * scroll-back speed.
+     */
     protected final int friction;
+
+    /**
+     * The number of children views to estimate the content size of RecyclerView (or ListView).
+     * The estimation is computed by averaging the children views size then multiply by the
+     * total items inside the adapter.
+     */
     protected final int viewCountEstimateSize;
+
+    /**
+     * The maximum adapter size (number of items in the adapter) that the system will include
+     * content size estimation of the RecyclerView (or ListView) in the calculation.
+     */
     protected final int maxAdapterSizeToEstimate;
 
     public static final BouncyConfig DEFAULT = new Builder().build();
@@ -105,11 +133,19 @@ public class BouncyConfig {
         private int nestedViewCountEstimateSize = DEF_VIEW_COUNT_ESTIMATE_SIZE;
         private int nestedMaxAdapterSizeToEstimate = DEF_MAX_ADAPTER_SIZE_TO_ESTIMATE;
 
+        /**
+         * @param gapLimit The maximum over-scroll gap size (in dp). The default
+         *                 value is 220dp.
+         */
         public Builder setGapLimit(int gapLimit) {
             nestedGapLimit = gapLimit;
             return this;
         }
 
+        /**
+         * @param speedFactor The higher the speedFactor is, the less the view will utilize
+         * the gap limit. Minimum value is 1. The default value is 5.
+         */
         public Builder setSpeedFactor(double speedFactor) {
             if (speedFactor < 1)
                 speedFactor = 1;
@@ -117,21 +153,39 @@ public class BouncyConfig {
             return this;
         }
 
+        /**
+         * @param tension Tension of the spring. It should be set to a high value (ex. 1000)
+         * for smooth animation. The default value is 1000.
+         */
         public Builder setTension(int tension) {
             nestedTension = tension;
             return this;
         }
 
+        /**
+         * @param friction Friction of the spring. High friction value will slow down the
+         * scroll-back speed. The default value is 200.
+         */
         public Builder setFriction(int friction) {
             nestedFriction = friction;
             return this;
         }
 
+        /**
+         * @param count The number of children views to estimate the content size of RecyclerView (or ListView).
+         * The estimation is computed by averaging the children views size then multiply by the
+         * total items inside the adapter. The default value is 5.
+         */
         public Builder setViewCountEstimateSize(int count) {
             nestedViewCountEstimateSize = count;
             return this;
         }
 
+        /**
+         * @param size The maximum adapter size (number of items in the adapter) that the system will include
+         * content size estimation of the RecyclerView (or ListView) in the calculation. The default
+         *             value is 20.
+         */
         public Builder setMaxAdapterSizeToEstimate(int size) {
             nestedMaxAdapterSizeToEstimate = size;
             return this;

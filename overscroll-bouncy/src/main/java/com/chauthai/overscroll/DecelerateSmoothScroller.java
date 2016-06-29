@@ -32,7 +32,7 @@ import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 
 /**
- * Created by Chau Thai on 6/3/16.
+ * A smoother scroller which decelerates the scroll speed quadratically.
  */
 public class DecelerateSmoothScroller extends LinearSmoothScroller {
     private static final float DECELERATE_FACTOR = 2.0f;
@@ -48,16 +48,6 @@ public class DecelerateSmoothScroller extends LinearSmoothScroller {
 
     public DecelerateSmoothScroller(Context context) {
         super(context);
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
     }
 
     @Override
