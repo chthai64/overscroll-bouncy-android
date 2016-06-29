@@ -75,7 +75,7 @@ public class RecyclerViewBouncy extends RecyclerView {
     }
 
     /**
-     * @param layout only supports {@link LinearLayoutManager}
+     * @param layout only supports LinearLayoutManager
      */
     @Override
     public void setLayoutManager(LayoutManager layout) {

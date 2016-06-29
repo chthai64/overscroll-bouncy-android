@@ -102,10 +102,10 @@ public class DecelerateSmoothScroller extends LinearSmoothScroller {
      * Set the direction to scroll.
      * @param vector
      * <ul>
-     *  <li>x > 0 : scroll left</li>
-     *  <li>x < 0 : scroll right</li>
-     *  <li>y > 0 : scroll up</li>
-     *  <li>y < 0 : scroll down</li>
+     *  <li>x &#62; 0 : scroll left</li>
+     *  <li>x &#60; 0 : scroll right</li>
+     *  <li>y &#62; 0 : scroll up</li>
+     *  <li>y &#60; 0 : scroll down</li>
      * </ul>
      */
     public void setScrollVector(PointF vector) {
