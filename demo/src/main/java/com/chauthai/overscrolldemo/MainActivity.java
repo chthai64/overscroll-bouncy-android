@@ -11,10 +11,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private static final int SIZE = 15;
-
     private RecyclerView recyclerView;
-    private LinearLayoutManager layoutManager;
-    private MyAdapter adapter;
 
 
     @Override
@@ -28,10 +25,10 @@ public class MainActivity extends AppCompatActivity {
     public void onRowClicked(View v) {}
 
     private void setupRecyclerView() {
-        layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(layoutManager);
 
-        adapter = new MyAdapter(this, getDataSet(SIZE));
+        MyAdapter adapter = new MyAdapter(this, getDataSet(SIZE));
         recyclerView.setAdapter(adapter);
     }
 
