@@ -9,7 +9,7 @@ An Android library which simulates iOS-like overscroll animation. It uses spring
 ##### Dependencies
 ```groovy
 dependencies {
-    // coming soon
+    compile 'com.chauthai.overscroll:overscroll-bouncy:0.1.0'
 }
 ```
 
