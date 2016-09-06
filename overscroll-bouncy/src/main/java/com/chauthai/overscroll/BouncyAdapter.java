@@ -176,7 +176,7 @@ class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.Sprin
         if (position == getItemCount() - 1)
             return VIEW_TYPE_FOOTER;
 
-        return mAdapter.getItemViewType(position);
+        return mAdapter.getItemViewType(position - 1);
     }
 
     @Override
