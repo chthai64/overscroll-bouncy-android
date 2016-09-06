@@ -1,6 +1,6 @@
 # OverScrollBouncy
 #####An Android library which supports overscroll bounce effect. 
-It uses spring mechanism for animating the scrollback. It currently supports ***RecyclerView*** with LinearLayoutManager. I'm working on ***ListView*** and ***ScrollView***.
+It uses spring mechanism for animating the scrollback. It currently supports ***RecyclerView*** with LinearLayoutManager.
 
 ## Demo
 ![Demo](https://github.com/chthai64/overscroll-bouncy-android/raw/master/arts/OverscrollDemo.gif)
