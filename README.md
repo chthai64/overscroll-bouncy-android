@@ -14,7 +14,7 @@ It uses spring mechanism for animating the scrollback. It currently supports ***
 ##### Dependencies
 ```groovy
 dependencies {
-    compile 'com.chauthai.overscroll:overscroll-bouncy:0.1.0'
+    compile 'com.chauthai.overscroll:overscroll-bouncy:0.1.1'
 }
 ```
 
