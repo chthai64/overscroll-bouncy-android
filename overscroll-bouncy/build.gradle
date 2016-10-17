@@ -4,13 +4,13 @@ apply plugin: 'com.jfrog.bintray'
 
 android {
     compileSdkVersion 24
-    buildToolsVersion "24.0.2"
+    buildToolsVersion "24.0.3"
 
     defaultConfig {
         minSdkVersion 14
         targetSdkVersion 24
-        versionCode 1
-        versionName "0.1.0"
+        versionCode 2
+        versionName "0.1.1"
     }
     buildTypes {
         release {
@@ -22,8 +22,8 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:24.2.0'
-    compile 'com.android.support:recyclerview-v7:24.2.0'
+    compile 'com.android.support:appcompat-v7:24.2.1'
+    compile 'com.android.support:recyclerview-v7:24.2.1'
     compile 'com.facebook.rebound:rebound:0.3.8'
 }
 
@@ -40,7 +40,7 @@ ext {
     siteUrl = 'https://github.com/chthai64/overscroll-bouncy-android'
     gitUrl = 'https://github.com/chthai64/overscroll-bouncy-android.git'
 
-    libraryVersion = '0.1.0'
+    libraryVersion = '0.1.1'
 
     developerId = 'chthai64'
     developerName = 'Chau Thai'
