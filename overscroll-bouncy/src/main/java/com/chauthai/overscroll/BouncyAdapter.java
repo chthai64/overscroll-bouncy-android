@@ -116,6 +116,8 @@ class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.Sprin
      */
     private boolean isSpringFirstValue = true;
 
+    private GestureDetectorCompat mGestureDetector;
+
     public BouncyAdapter(Context context, RecyclerView recyclerView,
                           RecyclerView.Adapter adapter,  BouncyConfig config) {
         if (recyclerView == null)
@@ -142,6 +144,7 @@ class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.Sprin
         mSpringScroller = new SpringScroller(config.tension, config.friction, this);
 
         initRecyclerView();
+        initGestureDectorCompat();
     }
 
     @Override
@@ -349,6 +352,87 @@ class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.Sprin
         });
     }
 
+    private void initGestureDectorCompat() {
+        mGestureDetector = new GestureDetectorCompat(mContext,
+            new GestureDetector.SimpleOnGestureListener() {
+                int scrollByCount = 0;
+
+                @Override
+                public boolean onDown(MotionEvent e) {
+                    scrollByCount = 0;
+                    mFlingOverScrollBack = false;
+                    return true;
+                }
+
+                @Override
+                public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+                    final int headerVisible = getHeaderVisibleLength();
+                    final int footerVisible = getFooterVisibleLength();
+
+                    int visible = (headerVisible > 0)? headerVisible : footerVisible;
+
+                    if (visible > 0) {
+                        scrollByCount++;
+                        mFirstScrollBy = (scrollByCount == 1);
+
+                        double ratioVisible = (double) visible / mGapLimitPx;
+                        float distance = directionVertical()? distanceY : distanceX;
+                        double scrollDist = Math.abs(distance - distance * ratioVisible);
+
+                        if (distance < 0) {
+                            scrollDist *= -1;
+                        }
+
+                        scrollBy((int) scrollDist);
+                    }
+
+                    // still in onTouchEvent, manually scroll the recycler view.
+                    else if (visible == 0 && !mGestureOnIntercept) {
+                        mRecyclerView.scrollBy((int) distanceX, (int) distanceY);
+                    }
+
+                    return true;
+                }
+
+                @Override
+                public boolean onFling(MotionEvent e1, MotionEvent e2, final float velocityX, final float velocityY) {
+                    final int headerVisible = getHeaderVisibleLength();
+                    final int footerVisible = getFooterVisibleLength();
+
+                    float deltaVel = directionVertical()? velocityY : velocityX;
+                    if (mLayoutManager.getReverseLayout())
+                        deltaVel *= -1.0;
+
+                    final boolean gapVisible = headerVisible > 0 || footerVisible > 0;
+                    final boolean isFlingOverBack = gapVisible && !mGestureOnIntercept &&
+                        ((headerVisible > 0 && deltaVel < 0) || (footerVisible > 0 && deltaVel > 0));
+
+                    // gaps are not visible, use regular fling.
+                    if (!gapVisible && !mGestureOnIntercept) {
+                        mHandlerUI.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                mRecyclerView.fling((int) -velocityX, (int) -velocityY);
+                            }
+                        });
+                    }
+
+                    // gap is visible, only fling if it's fling back.
+                    else if (isFlingOverBack) {
+                        mHandlerUI.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                mFlingOverScrollBack = true;
+                                mRecyclerView.fling((int) -velocityX, (int) -velocityY);
+                            }
+                        });
+                    }
+
+                    return true;
+                }
+            });
+    }
+
     private void onActionUp() {
         final int footerVisible = getFooterVisibleLength();
         final int headerVisible = getHeaderVisibleLength();
@@ -495,85 +579,6 @@ class BouncyAdapter extends RecyclerView.Adapter implements SpringScroller.Sprin
 
         return getItemCount() - 1;
     }
-
-    private final GestureDetectorCompat mGestureDetector = new GestureDetectorCompat(mContext,
-            new GestureDetector.SimpleOnGestureListener() {
-                int scrollByCount = 0;
-
-                @Override
-                public boolean onDown(MotionEvent e) {
-                    scrollByCount = 0;
-                    mFlingOverScrollBack = false;
-                    return true;
-                }
-
-                @Override
-                public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-                    final int headerVisible = getHeaderVisibleLength();
-                    final int footerVisible = getFooterVisibleLength();
-
-                    int visible = (headerVisible > 0)? headerVisible : footerVisible;
-
-                    if (visible > 0) {
-                        scrollByCount++;
-                        mFirstScrollBy = (scrollByCount == 1);
-
-                        double ratioVisible = (double) visible / mGapLimitPx;
-                        float distance = directionVertical()? distanceY : distanceX;
-                        double scrollDist = Math.abs(distance - distance * ratioVisible);
-
-                        if (distance < 0) {
-                            scrollDist *= -1;
-                        }
-
-                        scrollBy((int) scrollDist);
-                    }
-
-                    // still in onTouchEvent, manually scroll the recycler view.
-                    else if (visible == 0 && !mGestureOnIntercept) {
-                        mRecyclerView.scrollBy((int) distanceX, (int) distanceY);
-                    }
-
-                    return true;
-                }
-
-                @Override
-                public boolean onFling(MotionEvent e1, MotionEvent e2, final float velocityX, final float velocityY) {
-                    final int headerVisible = getHeaderVisibleLength();
-                    final int footerVisible = getFooterVisibleLength();
-
-                    float deltaVel = directionVertical()? velocityY : velocityX;
-                    if (mLayoutManager.getReverseLayout())
-                        deltaVel *= -1.0;
-
-                    final boolean gapVisible = headerVisible > 0 || footerVisible > 0;
-                    final boolean isFlingOverBack = gapVisible && !mGestureOnIntercept &&
-                            ((headerVisible > 0 && deltaVel < 0) || (footerVisible > 0 && deltaVel > 0));
-
-                    // gaps are not visible, use regular fling.
-                    if (!gapVisible && !mGestureOnIntercept) {
-                        mHandlerUI.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                mRecyclerView.fling((int) -velocityX, (int) -velocityY);
-                            }
-                        });
-                    }
-
-                    // gap is visible, only fling if it's fling back.
-                    else if (isFlingOverBack) {
-                        mHandlerUI.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                mFlingOverScrollBack = true;
-                                mRecyclerView.fling((int) -velocityX, (int) -velocityY);
-                            }
-                        });
-                    }
-
-                    return true;
-                }
-            });
 
     /**
      * Scroll by vertically or horizontally depends on the direction of the
