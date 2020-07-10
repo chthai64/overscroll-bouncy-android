@@ -2,7 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/overscroll-bouncy/com.chauthai.overscroll-overscroll-bouncy.iml" filepath="$PROJECT_DIR$/.idea/modules/overscroll-bouncy/com.chauthai.overscroll-overscroll-bouncy.iml" group="os/overscroll-bouncy" />
       <module fileurl="file://$PROJECT_DIR$/demo/demo.iml" filepath="$PROJECT_DIR$/demo/demo.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/os.iml" filepath="$PROJECT_DIR$/.idea/modules/os.iml" group="os" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/demo/os-demo.iml" filepath="$PROJECT_DIR$/.idea/modules/demo/os-demo.iml" group="os/demo" />
       <module fileurl="file://$PROJECT_DIR$/overscroll-bouncy/overscroll-bouncy.iml" filepath="$PROJECT_DIR$/overscroll-bouncy/overscroll-bouncy.iml" />
       <module fileurl="file://$PROJECT_DIR$/overscroll-bouncy-android.iml" filepath="$PROJECT_DIR$/overscroll-bouncy-android.iml" />
     </modules>
